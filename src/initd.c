@@ -21,6 +21,7 @@
  */
 static void create()
 {
+    compile_object("api/lib/TlsClientSession");
     compile_object("sys/tls_server");
     compile_object("sys/registry");
     compile_object("services/obj/server");

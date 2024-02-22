@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/Signal-Server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024 Dworkin B.V.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,26 +16,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# ifdef REGISTER
+# include "~TLS/tls.h"
 
-/*
- * register REST API endpoints
- */
-register(CHAT_SERVER, "POST", "/v1/verification/session",
-	 "postVerificationNewSession", argEntityJson());
-
-# else
-
-# include "~HTTP/HttpField.h"
-
-inherit "~/lib/rest/server";
+inherit TlsClientSession;
 
 
 /*
- * create a new verification session
+ * override cipherSuites
  */
-static int postVerificationNewSession(mapping entity)
+static string *cipherSuites()
 {
+    return ({
+	TLS_AES_256_GCM_SHA384,
+	TLS_AES_128_GCM_SHA256,
+	TLS_CHACHA20_POLY1305_SHA256,
+	TLS_AES_128_CCM_SHA256,
+	TLS_AES_128_CCM_8_SHA256
+    });
 }
 
-# endif
+/*
+ * override supportedGroups
+ */
+static string *supportedGroups()
+{
+    return ({
+	TLS_X25519,
+	TLS_X448,
+	TLS_SECP256R1,
+	TLS_SECP384R1,
+	TLS_SECP521R1,
+	TLS_FFDHE2048,
+	TLS_FFDHE3072,
+	TLS_FFDHE4096,
+	TLS_FFDHE6144,
+	TLS_FFDHE8192
+    });
+}

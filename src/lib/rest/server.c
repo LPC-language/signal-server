@@ -17,7 +17,6 @@
  */
 
 # include <String.h>
-# include "~HTTP/HttpConnection.h"
 # include "~HTTP/HttpRequest.h"
 # include "~HTTP/HttpResponse.h"
 # include "~HTTP/HttpField.h"
@@ -108,11 +107,12 @@ private string comment(int code)
  * send a response
  */
 static int respond(int code, string type, StringBuffer entity,
-		    varargs mapping extraHeaders)
+		   varargs mapping extraHeaders)
 {
     HttpResponse response;
     HttpFields headers;
-    string *indices, *values;
+    string *indices;
+    mixed *values;
     int i;
 
     response = new HttpResponse(1.1, code, comment(code));
@@ -140,7 +140,7 @@ static int respond(int code, string type, StringBuffer entity,
     }
     response->setHeaders(headers);
 
-    connection->sendRequest(response);
+    connection->sendResponse(response);
     if (entity) {
 	connection->sendChunk(entity);
     }
@@ -153,14 +153,12 @@ static int respond(int code, string type, StringBuffer entity,
  */
 private int call(StringBuffer entity)
 {
-    string function;
-    int sz, i;
     mixed *args;
+    int i;
+    string str;
 
-    function = handle[0];
-    sz = handle[1];
-    args = handle[2 + sz ..];
-    for (sz = sizeof(args), i = 0; i < sz; i++) {
+    args = handle[2 + handle[1] ..];
+    for (i = sizeof(args); --i >= 0; ) {
 	if (typeof(args[i]) == T_STRING) {
 	    args[i] = request->headerValue(args[i]);
 	} else {
@@ -171,6 +169,10 @@ private int call(StringBuffer entity)
 
 	    case ARG_ENTITY_JSON:
 		try {
+		    str = request->headerValue("Content-Type");
+		    if (lower_case(str) != "application/json") {
+			error("Content-Type not JSON");
+		    }
 		    args[i] = json::decode(entity->chunk());
 		} catch (...) {
 		    return respond(HTTP_BAD_REQUEST, nil, nil);
@@ -180,7 +182,7 @@ private int call(StringBuffer entity)
 	}
     }
 
-    return call_other(this_object(), function, args...);
+    return call_other(this_object(), handle[0], args...);
 }
 
 /*
@@ -192,6 +194,8 @@ int receiveRequest(int code, HttpRequest request)
     mixed length;
 
     if (previous_object() == connection) {
+	::request = request;
+
 	if (code != 0) {
 	    return respond(code, nil, nil);
 	}
@@ -220,7 +224,11 @@ int receiveRequest(int code, HttpRequest request)
 	}
 
 	length = request->headerValue("Content-Length");
-	if (typeof(length) == T_INT) {
+	switch (typeof(length)) {
+	case T_NIL:
+	    return call(nil);
+
+	case T_INT:
 	    if (length > REST_LENGTH_LIMIT) {
 		return respond(HTTP_CONTENT_TOO_LARGE, nil, nil);
 	    }
@@ -228,8 +236,10 @@ int receiveRequest(int code, HttpRequest request)
 		return respond(HTTP_CONTENT_TOO_LARGE, nil, nil);
 	    }
 	    connection->expectEntity(length);
-	} else {
-	    return call(nil);
+	    break;
+
+	default:
+	    return respond(HTTP_BAD_REQUEST, nil, nil);
 	}
     }
 }

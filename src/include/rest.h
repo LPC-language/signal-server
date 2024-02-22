@@ -16,11 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+# define RestTlsClientSession	object "/usr/MsgServer/api/lib/TlsClientSession"
+
 # define ARG_ENTITY		1
 # define ARG_ENTITY_JSON	2
 
-# define ArgHeader(header)	(header)
-# define ArgEntity()		ARG_ENTITY
-# define ArgEntityJson()	ARG_ENTITY_JSON
+# define argHeader(header)	(header)
+# define argEntity()		ARG_ENTITY
+# define argEntityJson()	ARG_ENTITY_JSON
 
 # define REST_LENGTH_LIMIT	4194304
