@@ -16,6 +16,10 @@ hotboot		= ({ "../bin/hydra",	/* hotboot binary */
 		     "../server.dgd",	/* hotboot config file */
 		     "../state/snapshot",
 		     "../state/snapshot.old" });
+modules		= ([ "../ext/jit.1.4" : "../ext/src/jit",
+		     "../ext/zlib.1.4" : "",
+		     "../ext/crypto.1.4" : "",
+		     "../ext/libsignal.1.4" : "" ]);
 
 typechecking	= 2;			/* global typechecking */
 include_file	= "/include/std.h";	/* standard include file */
