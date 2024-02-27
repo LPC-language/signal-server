@@ -153,14 +153,18 @@ static int respond(int code, string type, StringBuffer entity,
  */
 private int call(StringBuffer entity)
 {
-    mixed *args;
+    mixed *args, arg;
     int i;
     string str;
 
-    args = handle[2 + handle[1] ..];
+    args = handle[2 ..];
     for (i = sizeof(args); --i >= 0; ) {
 	if (typeof(args[i]) == T_STRING) {
-	    args[i] = request->headerValue(args[i]);
+	    arg = request->headerValue(args[i]);
+	    if (typeof(arg) == T_ARRAY && sizeof(arg) == 1) {
+		arg = arg[0];
+	    }
+	    args[i] = arg;
 	} else {
 	    switch (args[i]) {
 	    case ARG_ENTITY:
@@ -182,7 +186,7 @@ private int call(StringBuffer entity)
 	}
     }
 
-    return call_other(this_object(), handle[0], args...);
+    return call_other(this_object(), handle[0], (handle[1] + args)...);
 }
 
 /*

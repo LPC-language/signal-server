@@ -75,7 +75,7 @@ mixed *lookup(string host, string method, string path)
     if (!call) {
 	return nil;
     }
-    return ({ call[0], sizeof(args) }) + args + call[1 ..];
+    return ({ call[0], args }) + call[1 ..];
 }
 
 /*
