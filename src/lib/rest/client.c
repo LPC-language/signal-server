@@ -35,6 +35,7 @@ private inherit json "/lib/util/json";
 private object connection;	/* TLS connection */
 private HttpResponse response;	/* most recent response */
 private mixed *handle;		/* call handle */
+private StringBuffer chunks;	/* collected chunks */
 
 /*
  * initialize
@@ -141,27 +142,46 @@ void receiveResponse(HttpResponse response)
 	::response = response;
 
 	if (response->headerValue("Transfer-Encoding")) {
-	    error("Transfer-Encoding in response");
+	    chunks = new StringBuffer;
+	    connection->expectChunk();
+	} else {
+	    length = response->headerValue("Content-Length");
+	    switch (typeof(length)) {
+	    case T_NIL:
+		call(nil);
+		break;
+
+	    case T_INT:
+		if (length > REST_LENGTH_LIMIT) {
+		    error("Content-Length too large");
+		}
+		if (sizeof(handle & ({ ARG_ENTITY_JSON })) != 0 &&
+		    length > 65535) {
+		    error("JSON entity too large");
+		}
+		connection->expectEntity(length);
+		break;
+
+	    default:
+		error("Bad Content-Length");
+	    }
 	}
+    }
+}
 
-	length = response->headerValue("Content-Length");
-	switch (typeof(length)) {
-	case T_NIL:
-	    call(nil);
-	    break;
-
-	case T_INT:
-	    if (length > REST_LENGTH_LIMIT) {
-		error("Content-Length too large");
-	    }
-	    if (sizeof(handle & ({ ARG_ENTITY_JSON })) != 0 && length > 65535) {
-		error("JSON entity too large");
-	    }
-	    connection->expectEntity(length);
-	    break;
-
-	default:
-	    error("Bad Content-Length");
+/*
+ * receive a chunk
+ */
+void receiveChunk(StringBuffer chunk, HttpFields trailers)
+{
+    if (previous_object() == connection) {
+	if (chunk) {
+	    chunks->append(chunk);
+	    connection->expectChunk();
+	} else {
+	    chunk = chunks;
+	    chunks = nil;
+	    call(chunk);
 	}
     }
 }
@@ -179,19 +199,35 @@ void receiveEntity(StringBuffer entity)
 /*
  * finished handling response
  */
-void doneChunk()
+static void doneResponse()
 {
-    if (previous_object() == connection) {
-	connection->doneResponse();
+    connection->doneResponse();
+}
+
+/*
+ * break the connection
+ */
+static void disconnect()
+{
+    if (connection) {
+	connection->disconnect();
     }
+}
+
+/*
+ * close connection
+ */
+static void close()
+{
+    destruct_object(this_object());
 }
 
 /*
  * cleanup after TLS connection ends
  */
-void disconnect()
+void disconnected()
 {
     if (previous_object() == connection) {
-	destruct_object(this_object());
+	close();
     }
 }

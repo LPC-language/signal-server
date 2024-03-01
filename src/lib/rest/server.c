@@ -269,11 +269,29 @@ void doneChunk()
 }
 
 /*
+ * break the connection
+ */
+static void disconnect()
+{
+    if (connection) {
+	connection->disconnect();
+    }
+}
+
+/*
+ * close connection
+ */
+static void close()
+{
+    destruct_object(this_object());
+}
+
+/*
  * cleanup after TLS connection ends
  */
-void disconnect()
+void disconnected()
 {
     if (previous_object() == connection) {
-	destruct_object(this_object());
+	close();
     }
 }
