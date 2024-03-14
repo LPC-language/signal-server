@@ -34,18 +34,38 @@ private inherit json "/lib/util/json";
 
 private object connection;	/* TLS connection */
 private HttpResponse response;	/* most recent response */
-private mixed *handle;		/* call handle */
+private mixed handle;		/* call handle */
 private StringBuffer chunks;	/* collected chunks */
 
 /*
  * initialize
  */
-static void create(string address, int port, mixed *requestArgs)
+static void create(string address, int port, string function)
 {
     connection = clone_object(HTTP1_TLS_CLIENT, this_object(), address, port,
-			      requestArgs[1], nil, nil,
+			      address, nil, nil,
 			      OBJECT_PATH(RestTlsClientSession));
-    handle = requestArgs;
+    handle = function;
+}
+
+/*
+ * connection establised
+ */
+void connected()
+{
+    if (previous_object() == connection) {
+	call_other(this_object(), handle, HTTP_OK);
+    }
+}
+
+/*
+ * connection failed
+ */
+void connectFailed(int errorcode)
+{
+    if (previous_object() == connection) {
+	call_other(this_object(), handle, errorcode);
+    }
 }
 
 /*
@@ -88,16 +108,6 @@ static void request(string method, string host, string path, string type,
     }
 
     handle = ({ function }) + arguments;
-}
-
-/*
- * connection establised
- */
-void connected()
-{
-    if (previous_object() == connection) {
-	request(handle...);
-    }
 }
 
 /*
