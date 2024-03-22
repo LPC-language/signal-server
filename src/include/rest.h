@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+# define RestServer		object "/usr/MsgServer/lib/rest/server"
+# define RestClient		object "/usr/MsgServer/lib/rest/client"
 # define RestTlsClientSession	object "/usr/MsgServer/api/lib/TlsClientSession"
 
 # define ARG_ENTITY		1
