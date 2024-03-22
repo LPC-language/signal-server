@@ -25,7 +25,7 @@ static void create()
     compile_object("obj/oneshot");
     compile_object("obj/fcm_sender");
     compile_object("sys/tls_server");
-    compile_object("sys/registry");
+    compile_object("sys/rest_api");
     compile_object("sys/fcm_relay");
     compile_object("services/obj/server");
 }

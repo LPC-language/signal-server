@@ -31,8 +31,6 @@ private inherit "/lib/util/ascii";
 private inherit json "/lib/util/json";
 
 
-# define REGISTRY	"/usr/MsgServer/sys/registry"
-
 private object connection;	/* TLS connection */
 private HttpRequest request;	/* most recent request */
 private mixed *handle;		/* call handle */
@@ -222,7 +220,7 @@ int receiveRequest(int code, HttpRequest request)
 	    return respond(HTTP_CONTENT_TOO_LARGE, nil, nil);
 	}
 
-	handle = REGISTRY->lookup(host, request->method(), request->path());
+	handle = REST_API->lookup(host, request->method(), request->path());
 	if (!handle) {
 	    return respond(HTTP_NOT_FOUND, nil, nil);
 	}
