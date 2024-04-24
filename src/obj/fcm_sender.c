@@ -21,7 +21,7 @@ string projectId, keyId, clientEmail, tokenUri;
 X509Key key;
 
 /*
- * initialize FCM sender objects
+ * initialize FCM sender object
  */
 static void create()
 {

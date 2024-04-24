@@ -28,6 +28,7 @@ static void create()
     compile_object("obj/kvnode_exp");
     compile_object("sys/tls_server");
     compile_object("sys/rest_api");
+    compile_object("sys/registration");
     compile_object("sys/fcm_relay");
     compile_object("services/obj/server");
 }

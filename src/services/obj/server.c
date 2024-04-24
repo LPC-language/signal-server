@@ -16,4 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-inherit "~/services/lib/chat";
+# include "services.h"
+
+inherit CHAT_SERVICES;

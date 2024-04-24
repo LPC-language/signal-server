@@ -18,3 +18,5 @@
 
 # define APPLICATION_NAME	"MsgServer"
 # define APPLICATION_VERSION	"9.60"
+
+# define CHAT_SERVICES		"/usr/MsgServer/services/lib/chat"
