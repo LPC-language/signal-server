@@ -82,11 +82,12 @@ static void sendMessage()
 {
     string target, type, message;
     int urgent;
+    Continuation callback;
 
     if (!active) {
 	startConnection();
     } else {
-	({ target, type, message, urgent }) = queue[0];
+	({ target, type, message, urgent, callback }) = queue[0];
 	message = "{\"message\":{\"token\":\"" + target + "\"," +
 		  "\"data\":{\"" + type + "\":\"" + message + "\"}," +
 		  "\"android\":{\"priority\":\"" +
@@ -105,10 +106,16 @@ static void sendMessage()
  */
 static void response(int code, StringBuffer entity)
 {
+    Continuation callback;
+
     requested = FALSE;
     switch (code) {
     case HTTP_OK:
-    case HTTP_NOT_FOUND:	/* XXX unknown target */
+    case HTTP_NOT_FOUND:
+	callback = queue[0][4];
+	if (callback) {
+	    callback->runNext(code);
+	}
 	queue = queue[1 ..];
 	if (sizeof(queue) != 0) {
 	    call_out("sendMessage", 0);
@@ -194,9 +201,10 @@ static void storeAccessToken(int code, StringBuffer entity)
 /*
  * enqueue message
  */
-static void enqueue(string target, string type, string message, int urgent)
+static void enqueue(string target, string type, string message, int urgent,
+		    Continuation callback)
 {
-    queue += ({ ({ target, type, message, urgent }) });
+    queue += ({ ({ target, type, message, urgent, callback }) });
     if (sizeof(queue) == 1) {
 	if (!accessToken) {
 	    getAccessToken();
@@ -209,7 +217,8 @@ static void enqueue(string target, string type, string message, int urgent)
 /*
  * send a notification
  */
-void notify(string target, string type, string message, int urgent)
+void notify(string target, string type, string message, int urgent,
+	    varargs Continuation callback)
 {
-    call_out("enqueue", 0, target, type, message, urgent);
+    call_out("enqueue", 0, target, type, message, urgent, callback);
 }

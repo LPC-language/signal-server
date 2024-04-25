@@ -1,3 +1,6 @@
+# include <Continuation.h>
+
+
 object sender;	/* XXX more senders probably needed */
 
 /*
@@ -19,17 +22,18 @@ void sendNotification(string target, int urgent)
 /*
  * send a challenge
  */
-void sendChallenge(string target, string challenge)
+void sendChallenge(string target, string challenge, Continuation callback)
 {
-    sender->notify(target, "challenge", challenge, TRUE);
+    sender->notify(target, "challenge", challenge, TRUE, callback);
 }
 
 /*
  * send a rateLimitChallenge
  */
-void sendRateLimitChallenge(string target, string challenge)
+void sendRateLimitChallenge(string target, string challenge,
+			    Continuation callback)
 {
-    sender->notify(target, "rateLimitChallenge", challenge, TRUE);
+    sender->notify(target, "rateLimitChallenge", challenge, TRUE, callback);
 }
 
 /*
