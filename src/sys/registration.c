@@ -7,7 +7,7 @@ private inherit hex "/lib/util/hex";
 
 # define DURATION	30 * 24 * 3600
 
-object sessions;	/* initially: phoneNumber, verified */
+object sessions;	/* session mappings */
 object phoneIndex;	/* phoneNumber : sessionId */
 
 /*
@@ -24,7 +24,7 @@ static void create()
  */
 mixed *getSessionId(string phoneNumber)
 {
-    if (previous_program() == CHAT_SERVICES) {
+    if (previous_program() == VERIFICATION_SERVICE) {
 	string sessionId;
 	mapping session;
 
@@ -33,10 +33,7 @@ mixed *getSessionId(string phoneNumber)
 	    return ({ sessionId, sessions[sessionId] });
 	}
 
-	session = ([
-	    "phoneNumber" : phoneNumber,
-	    "verified" : FALSE
-	]);
+	session = ([ "phoneNumber" : phoneNumber ]);
 
 	for (;;) {
 	    sessionId = hex::format(random_string(16));
@@ -45,6 +42,7 @@ mixed *getSessionId(string phoneNumber)
 	    } catch (...) {
 		continue;
 	    }
+	    session["id"] = sessionId;
 	    return ({ phoneIndex[phoneNumber] = sessionId, session });
 	}
     }
@@ -55,7 +53,7 @@ mixed *getSessionId(string phoneNumber)
  */
 mapping getSession(string sessionId)
 {
-    if (previous_program() == CHAT_SERVICES) {
+    if (previous_program() == VERIFICATION_SERVICE) {
 	return sessions[sessionId];
     }
 }
@@ -65,7 +63,7 @@ mapping getSession(string sessionId)
  */
 void remove(string sessionId)
 {
-    if (previous_program() == CHAT_SERVICES) {
+    if (previous_program() == VERIFICATION_SERVICE) {
 	mapping values;
 
 	values = sessions[sessionId];

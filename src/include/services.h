@@ -20,3 +20,5 @@
 # define APPLICATION_VERSION	"9.60"
 
 # define CHAT_SERVICES		"/usr/MsgServer/services/lib/chat"
+
+# define VERIFICATION_SERVICE	"/usr/MsgServer/services/lib/chat/verification"

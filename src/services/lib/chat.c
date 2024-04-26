@@ -21,21 +21,11 @@
 /*
  * register REST API endpoints
  */
-register(CHAT_SERVER, "POST", "/v1/verification/session",
-	 "postVerificationNewSession", argEntityJson());
+
+# include "chat/verification.c"
 
 # else
 
-# include "~HTTP/HttpField.h"
-
-inherit "~/lib/rest/server";
-
-
-/*
- * create a new verification session
- */
-static int postVerificationNewSession(mapping entity)
-{
-}
+inherit "chat/verification";
 
 # endif
