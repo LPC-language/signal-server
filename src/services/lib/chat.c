@@ -22,10 +22,10 @@
  * register REST API endpoints
  */
 
-# include "chat/verification.c"
+# include "chat/registration.c"
 
 # else
 
-inherit "chat/verification";
+inherit "chat/registration";
 
 # endif

@@ -36,7 +36,7 @@ register(CHAT_SERVER, "PUT", "/v1/verification/session/{}/code",
 # include <Continuation.h>
 # include "~HTTP/HttpResponse.h"
 # include "rest.h"
-# include "verification.h"
+# include "registration.h"
 # include "fcm.h"
 
 inherit RestServer;
@@ -184,7 +184,8 @@ static int putVerificationSessionCode(string sessionId, mapping entity)
     /*
      * XXX accept any code
      */
-    session["acceptCode"] = FALSE;
+    session["acceptCode"] = nil;
+    session["nextCode"] = nil;
     session["verified"] = TRUE;
     return respondVerification(session);
 }

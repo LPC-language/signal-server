@@ -16,9 +16,4 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# define APPLICATION_NAME	"MsgServer"
-# define APPLICATION_VERSION	"9.60"
-
-# define CHAT_SERVICES		"/usr/MsgServer/services/lib/chat"
-
-# define REGISTRATION_SERVICE	"/usr/MsgServer/services/lib/chat/registration"
+# define REGISTRATION_SERVER	"/usr/MsgServer/sys/registration"
