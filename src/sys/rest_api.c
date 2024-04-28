@@ -19,6 +19,7 @@
 # include "rest.h"
 # include <type.h>
 # include "~/config/services"
+# include"services.h"
 
 
 private mapping api;		/* REST API */
@@ -86,5 +87,5 @@ static void create()
     api = ([ ]);
 
 # define REGISTER
-# include "~/services/lib/chat.c"
+# include "~/services/lib/Chat.c"
 }

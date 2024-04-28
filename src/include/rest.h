@@ -18,8 +18,8 @@
 
 # define REST_API		"/usr/MsgServer/sys/rest_api"
 
-# define RestServer		object "/usr/MsgServer/lib/rest/server"
-# define RestClient		object "/usr/MsgServer/lib/rest/client"
+# define RestServer		object "/usr/MsgServer/lib/rest/Server"
+# define RestClient		object "/usr/MsgServer/lib/rest/Client"
 # define RestTlsClientSession	object "/usr/MsgServer/api/lib/TlsClientSession"
 
 # define ARG_ENTITY		1

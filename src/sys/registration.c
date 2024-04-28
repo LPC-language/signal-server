@@ -42,7 +42,7 @@ static void create()
  */
 mixed *getSessionId(string phoneNumber)
 {
-    if (previous_program() == REGISTRATION_SERVICE) {
+    if (previous_program() == RegistrationService) {
 	string sessionId;
 	mapping session;
 
@@ -71,7 +71,7 @@ mixed *getSessionId(string phoneNumber)
  */
 mapping getSession(string sessionId)
 {
-    if (previous_program() == REGISTRATION_SERVICE) {
+    if (previous_program() == RegistrationService) {
 	return sessions[sessionId];
     }
 }
@@ -81,7 +81,7 @@ mapping getSession(string sessionId)
  */
 void remove(string sessionId)
 {
-    if (previous_program() == REGISTRATION_SERVICE) {
+    if (previous_program() == RegistrationService) {
 	mapping values;
 
 	values = sessions[sessionId];

@@ -18,4 +18,4 @@
 
 # include "services.h"
 
-inherit CHAT_SERVICES;
+inherit ChatServices;

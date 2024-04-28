@@ -19,6 +19,6 @@
 # define APPLICATION_NAME	"MsgServer"
 # define APPLICATION_VERSION	"9.60"
 
-# define CHAT_SERVICES		"/usr/MsgServer/services/lib/chat"
+# define ChatServices		"/usr/MsgServer/services/lib/Chat"
 
-# define REGISTRATION_SERVICE	"/usr/MsgServer/services/lib/chat/registration"
+# define RegistrationService	"/usr/MsgServer/services/lib/chat/Registration"
