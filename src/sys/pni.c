@@ -16,23 +16,61 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+# include <KVstore.h>
+# include "account.h"
+# include "services.h"
+
+private inherit "/lib/util/random";
+
+
+object pni;	/* phoneNumber : Id */
+object ipn;	/* id : phoneNumber */
+
 /*
- * initialize message server
+ * initialize PNI server
  */
 static void create()
 {
-    compile_object("api/lib/TlsClientSession");
-    compile_object("lib/KVstoreExp");
-    compile_object("lib/Device");
-    compile_object("lib/Account");
-    compile_object("obj/oneshot");
-    compile_object("obj/fcm_sender");
-    compile_object("obj/kvnode_exp");
-    compile_object("sys/tls_server");
-    compile_object("sys/rest_api");
-    compile_object("sys/registration");
-    compile_object("sys/fcm_relay");
-    compile_object("sys/accounts");
-    compile_object("sys/pni");
-    compile_object("services/obj/server");
+    pni = new KVstore(100);
+    ipn = new KVstore(100);
+}
+
+/*
+ * add a new phoneNumber : ID
+ */
+private atomic string add(string phoneNumber)
+{
+    string id;
+
+    for (;;) {
+	id = random_string(16);
+	try {
+	    ipn->add(id, phoneNumber);
+	} catch (...) {
+	    continue;
+	}
+	break;
+    }
+    pni[phoneNumber] = id;
+
+    return id;
+}
+
+/*
+ * get PNI for phone number
+ */
+string getId(string phoneNumber)
+{
+    string id;
+
+    id = pni[phoneNumber];
+    return (id) ? id : add(phoneNumber);
+}
+
+/*
+ * get phone number for PNI
+ */
+string getPhoneNumber(string id)
+{
+    return ipn[id];
 }

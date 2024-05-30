@@ -29,20 +29,28 @@ register(CHAT_SERVER, "POST", "/v1/verification/session/{}/code",
 	 argEntityJson());
 register(CHAT_SERVER, "PUT", "/v1/verification/session/{}/code",
 	 "putVerificationSessionCode", argEntityJson());
+register(CHAT_SERVER, "POST", "/v1/registration",
+	 "postRegistration", argHeader("Authorization"),
+	 argHeader("X-Signal-Agent"), argEntityJson());
 
 # else
 
 # include <String.h>
 # include <Continuation.h>
 # include "~HTTP/HttpResponse.h"
+# include "~HTTP/HttpField.h"
 # include "rest.h"
 # include "registration.h"
+# include "account.h"
 # include "fcm.h"
 
 inherit RestServer;
 private inherit "/lib/util/random";
+private inherit "/lib/util/ascii";
+private inherit base64 "/lib/util/base64";
 private inherit hex "/lib/util/hex";
 private inherit json "/lib/util/json";
+private inherit uuid "~/lib/uuid";
 
 
 /*
@@ -188,6 +196,81 @@ static int putVerificationSessionCode(string sessionId, mapping entity)
     session["nextCode"] = nil;
     session["verified"] = TRUE;
     return respondVerification(session);
+}
+
+/*
+ * register an account
+ */
+static int postRegistration(HttpAuthentication authorization, string agent,
+			    mapping entity)
+{
+    string phoneNumber, password;
+
+    if (!authorization || lower_case(authorization->scheme()) != "basic") {
+	return respond(HTTP_BAD_REQUEST, nil, nil);
+    }
+    sscanf(base64::decode(authorization->authentication()), "%s:%s",
+	   phoneNumber, password);
+
+    /* XXX check that sessionId passed verification */
+
+    new Continuation("postRegistration2", phoneNumber, password, agent,
+		     entity["accountAttributes"])
+	->chain("postRegistration3")
+	->chain("postRegistration4")
+	->runNext();
+}
+
+/*
+ * register an account, part 2
+ */
+static Account postRegistration2(string phoneNumber, string password,
+				 string agent, mapping attr)
+{
+    mapping cap;
+    Device device;
+
+    cap = attr["capabilities"];
+    device = new Device(cap["announcementGroup"], cap["changeNumber"],
+			cap["giftBadges"], cap["paymentActivation"],
+			cap["pni"], cap["senderKey"], cap["storage"],
+			cap["stories"], cap["uuid"]);
+    return new Account(phoneNumber, PNI_SERVER->getId(phoneNumber), password,
+		       agent, device, attr["discoverableByPhoneNumber"],
+		       attr["fetchesMessages"], attr["name"], attr["pin"],
+		       attr["pniRegistrationId"], attr["recoveryPassword"],
+		       attr["registrationId"], attr["registrationLock"],
+		       attr["signalingKey"], attr["unidentifiedAccessKey"],
+		       attr["unrestrictedUnidentifiedAccess"], attr["video"],
+		       attr["voice"]);
+}
+
+/*
+ * register an account, part 3
+ */
+static Account postRegistration3(Account account)
+{
+    ACCOUNT_SERVER->add(account);
+
+    return account;
+}
+
+/*
+ * register an account, part 4
+ */
+static void postRegistration4(Account account)
+{
+    mapping entity;
+
+    entity = ([
+	"uuid" : uuid::encode(account->id()),
+	"number" : account->phoneNumber(),
+	"pni" : uuid::encode(account->pni()),
+	/* userNameHash : null */
+	"storageCapable" : account->devices()[0]->capStorage()
+    ]);
+    respond(HTTP_OK, "application/json;charset=utf-8",
+	    new StringBuffer(json::encode(entity)));
 }
 
 # endif

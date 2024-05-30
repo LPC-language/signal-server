@@ -16,23 +16,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+private inherit hex "/lib/util/hex";
+
+
 /*
- * initialize message server
+ * encode as UUID
  */
-static void create()
+static string encode(string uuid)
 {
-    compile_object("api/lib/TlsClientSession");
-    compile_object("lib/KVstoreExp");
-    compile_object("lib/Device");
-    compile_object("lib/Account");
-    compile_object("obj/oneshot");
-    compile_object("obj/fcm_sender");
-    compile_object("obj/kvnode_exp");
-    compile_object("sys/tls_server");
-    compile_object("sys/rest_api");
-    compile_object("sys/registration");
-    compile_object("sys/fcm_relay");
-    compile_object("sys/accounts");
-    compile_object("sys/pni");
-    compile_object("services/obj/server");
+    if (!uuid || strlen(uuid) != 16) {
+	error("Bad UUID");
+    }
+    return hex::format(uuid[.. 3]) + "-" +
+	   hex::format(uuid[4 .. 5]) + "-" +
+	   hex::format(uuid[6 .. 7]) + "-" +
+	   hex::format(uuid[8 .. 9]) + "-" +
+	   hex::format(uuid[10 ..]);
+}
+
+/*
+ * decode a UUID
+ */
+static string decode(string uuid)
+{
+    if (!uuid || strlen(uuid) != 36 || uuid[8] != '-' || uuid[13] != '-' ||
+	uuid[18] != '-' || uuid[23] != '-') {
+	error("Bad UUID");
+    }
+    return hex::decodeString(uuid[.. 7]) +
+	   hex::decodeString(uuid[9 .. 12]) +
+	   hex::decodeString(uuid[14 .. 17]) +
+	   hex::decodeString(uuid[19 .. 22]) +
+	   hex::decodeString(uuid[24 ..]);
 }

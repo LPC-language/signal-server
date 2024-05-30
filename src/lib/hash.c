@@ -16,23 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+private inherit hex "/lib/util/hex";
+private inherit "~TLS/api/lib/hkdf";
+
+
 /*
- * initialize message server
+ * salted token hash
  */
-static void create()
+static string *hash(string token, varargs string salt)
 {
-    compile_object("api/lib/TlsClientSession");
-    compile_object("lib/KVstoreExp");
-    compile_object("lib/Device");
-    compile_object("lib/Account");
-    compile_object("obj/oneshot");
-    compile_object("obj/fcm_sender");
-    compile_object("obj/kvnode_exp");
-    compile_object("sys/tls_server");
-    compile_object("sys/rest_api");
-    compile_object("sys/registration");
-    compile_object("sys/fcm_relay");
-    compile_object("sys/accounts");
-    compile_object("sys/pni");
-    compile_object("services/obj/server");
+    if (!salt) {
+	salt = hex::format(secure_random(16));
+    }
+    return ({
+	"2." + hex::format(HKDF(token, "authtoken", 32, "SHA256", salt)),
+	salt
+    });
 }
