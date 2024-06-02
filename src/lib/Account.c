@@ -37,6 +37,8 @@ private string recoveryPassword;
 private string registrationLock;
 private string signalingKey;
 private string unidentifiedAccessKey;
+private string identityKey;
+private string pniKey;
 private int flags;
 
 /*
@@ -81,16 +83,42 @@ void setId(string id)
     }
 }
 
+Device device(int deviceId)
+{
+    return devices[deviceId];
+}
+
+void updateIdentityKey(string key)
+{
+    /*
+     * avoid object modification if possible
+     */
+    if (identityKey != key) {
+	identityKey = key;
+    }
+}
+
+void updatePniKey(string key)
+{
+    /*
+     * avoid object modification if possible
+     */
+    if (pniKey != key) {
+	pniKey = key;
+    }
+}
+
 
 string id()			{ return id; }
 string phoneNumber()		{ return phoneNumber; }
 string pni()			{ return pni; }
 string agent()			{ return agent; }
-Device *devices()		{ return map_values(devices); }
 int discoverable()		{ return (flags >> DISCOVERABLE) & 1; }
 string pin()			{ return pin; }
 int pniRegistrationId()		{ return pniRegistrationId; }
 string registrationLock()	{ return registrationLock; }
+string identityKey()		{ return identityKey; }
+string pniKey()			{ return pniKey; }
 int unidentifiedAccess()	{ return (flags >> UNIDENTIFIED_ACCESS) & 1; }
 int video()			{ return (flags >> VIDEO) & 1; }
 int voice()			{ return (flags >> VOICE) & 1; }

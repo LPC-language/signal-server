@@ -23,9 +23,11 @@
  */
 
 # include "chat/Registration.c"
+# include "chat/Keys.c"
 
 # else
 
 inherit "chat/Registration";
+inherit "chat/Keys";
 
 # endif

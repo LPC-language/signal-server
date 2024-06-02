@@ -21,3 +21,4 @@
 
 # define ACCOUNT_SERVER		"/usr/MsgServer/sys/accounts"
 # define PNI_SERVER		"/usr/MsgServer/sys/pni"
+# define KEYS_SERVER		"/usr/MsgServer/sys/keys"

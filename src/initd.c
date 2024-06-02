@@ -34,5 +34,6 @@ static void create()
     compile_object("sys/fcm_relay");
     compile_object("sys/accounts");
     compile_object("sys/pni");
+    compile_object("sys/keys");
     compile_object("services/obj/server");
 }

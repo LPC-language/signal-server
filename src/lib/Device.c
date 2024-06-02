@@ -32,6 +32,12 @@ private int fetchesMessages;
 private string authToken;
 private string salt;
 private string name;
+private int pkId;
+private string preKey;
+private string pkSignature;
+private int pniPkId;
+private string pniPreKey;
+private string pniPkSignature;
 private int cap;		/* capabilities */
 
 /*
@@ -78,6 +84,48 @@ void setAuthTokenHash(string authToken, string salt)
 void setName(string name)
 {
     ::name = name;
+}
+
+void updateSignedPreKey(int keyId, string key, string signature)
+{
+    /*
+     * avoid object modification if possible
+     */
+    if (pkId != keyId) {
+	pkId = keyId;
+    }
+    if (preKey != key) {
+	preKey = key;
+    }
+    if (pkSignature != signature) {
+	pkSignature = signature;
+    }
+}
+
+void updateSignedPniPreKey(int keyId, string key, string signature)
+{
+    /*
+     * avoid object modification if possible
+     */
+    if (pniPkId != keyId) {
+	pniPkId = keyId;
+    }
+    if (pniPreKey != key) {
+	pniPreKey = key;
+    }
+    if (pniPkSignature != signature) {
+	pniPkSignature = signature;
+    }
+}
+
+mixed *signedPreKey()
+{
+    return ({ pkId, preKey, pkSignature });
+}
+
+mixed *signedPniPreKey()
+{
+    return ({ pniPkId, pniPreKey, pniPkSignature });
 }
 
 

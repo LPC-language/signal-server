@@ -267,7 +267,7 @@ static void postRegistration4(Account account)
 	"number" : account->phoneNumber(),
 	"pni" : uuid::encode(account->pni()),
 	/* userNameHash : null */
-	"storageCapable" : account->devices()[0]->capStorage()
+	"storageCapable" : account->device(1)->capStorage()
     ]);
     respond(HTTP_OK, "application/json;charset=utf-8",
 	    new StringBuffer(json::encode(entity)));
