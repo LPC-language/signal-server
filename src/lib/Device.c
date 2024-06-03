@@ -38,6 +38,7 @@ private string pkSignature;
 private int pniPkId;
 private string pniPreKey;
 private string pniPkSignature;
+private string gcmId;
 private int cap;		/* capabilities */
 
 /*
@@ -84,6 +85,11 @@ void setAuthTokenHash(string authToken, string salt)
 void setName(string name)
 {
     ::name = name;
+}
+
+void setGcmId(string gcmId)
+{
+    ::gcmId = gcmId;
 }
 
 void updateSignedPreKey(int keyId, string key, string signature)
@@ -134,6 +140,7 @@ int registrationId()		{ return registrationId; }
 int fetchesMessages()		{ return fetchesMessages; }
 string *authTokenHash()		{ return ({ authToken, salt }); }
 string name()			{ return name; }
+string gcmId()			{ return gcmId; }
 int capAnnouncementGroup()	{ return (cap >> CAP_ANNOUNCEMENT_GROUP) & 1; }
 int capChangeNumber()		{ return (cap >> CAP_CHANGE_NUMBER) & 1; }
 int capGiftBadges()		{ return (cap >> CAP_GIFT_BADGES) & 1; }

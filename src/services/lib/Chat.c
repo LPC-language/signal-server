@@ -24,10 +24,12 @@
 
 # include "chat/Registration.c"
 # include "chat/Keys.c"
+# include "chat/Accounts.c"
 
 # else
 
 inherit "chat/Registration";
 inherit "chat/Keys";
+inherit "chat/Accounts";
 
 # endif
