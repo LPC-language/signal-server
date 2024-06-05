@@ -36,7 +36,7 @@ void register(string host, string method, string path, string function,
 
 
     map = api;
-    a = ({ host, method }) + explode(path, "/");
+    a = ({ host, method }) + explode(path + "/", "/");
     for (sz = sizeof(a), i = 0; i < sz; i++) {
 	str = a[i];
 	if (typeof(map[str]) != T_MAPPING) {
@@ -59,8 +59,13 @@ mixed *lookup(string host, string method, string path)
 
     args = ({ });
     map = api;
-    a = ({ host, method }) + explode(path, "/");
-    for (sz = sizeof(a), i = 0; i < sz; i++) {
+    sscanf(path, "%s?%s", path, str);
+    a = ({ host, method }) + explode(path + "/", "/");
+    sz = sizeof(a);
+    if (str) {
+	a[sz - 1] += "?" + str;
+    }
+    for (i = 0; i < sz; i++) {
 	str = a[i];
 	if (map[str]) {
 	    map = map[str];
