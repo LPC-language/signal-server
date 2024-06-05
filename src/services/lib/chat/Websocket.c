@@ -18,20 +18,25 @@
 
 # ifdef REGISTER
 
-/*
- * register REST API endpoints
- */
-
-# include "chat/Registration.c"
-# include "chat/Keys.c"
-# include "chat/Accounts.c"
-# include "chat/Websocket.c"
+register(CHAT_SERVER, "GET", "/v1/websocket/", "getWebsocket");
+register(CHAT_SERVER, "GET", "/v1/websocket/{}", "getWebsocketLogin");
 
 # else
 
-inherit "chat/Registration";
-inherit "chat/Keys";
-inherit "chat/Accounts";
-inherit "chat/Websocket";
+# include "~HTTP/HttpResponse.h"
+# include "rest.h"
+
+inherit RestServer;
+
+
+static int getWebsocket()
+{
+    return respond(HTTP_PROXY_AUTHENTICATION_REQUIRED, nil, nil);
+}
+
+static int getWebsocketLogin(string param)
+{
+    return respond(HTTP_PROXY_AUTHENTICATION_REQUIRED, nil, nil);
+}
 
 # endif
