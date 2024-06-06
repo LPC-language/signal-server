@@ -16,25 +16,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+private inherit asn "/lib/util/asn";
+
+
 /*
- * initialize message server
+ * protobuffer-encode an integer
  */
-static void create()
+static string protoInt(int value)
 {
-    compile_object("api/lib/TlsClientSession");
-    compile_object("lib/KVstoreExp");
-    compile_object("lib/Device");
-    compile_object("lib/Account");
-    compile_object("obj/oneshot");
-    compile_object("obj/fcm_sender");
-    compile_object("obj/kvnode_exp");
-    compile_object("sys/tls_server");
-    compile_object("sys/rest_api");
-    compile_object("sys/cert");
-    compile_object("sys/registration");
-    compile_object("sys/fcm_relay");
-    compile_object("sys/accounts");
-    compile_object("sys/pni");
-    compile_object("sys/keys");
-    compile_object("services/obj/server");
+    string str, c;
+
+    str = "";
+    c = ".";
+    while (value & -128) {
+	c[0] = 128 | (value & 127);
+	value >>= 7;
+	str += c;
+    }
+
+    c[0] = value;
+    return str + c;
+}
+
+/*
+ * protobuffer-encode a string
+ */
+static string protoString(string str)
+{
+    return protoInt(strlen(str)) + str;
+}
+
+/*
+ * protobuffer-encode time
+ */
+static string protoTime(int time, float mtime)
+{
+    string str;
+
+    str = "\1\0\0\0\0\0\0\0\0";
+    str = asn::reverse(asn_add(asn_mult(asn::encode(time), "\x03\xe8", str),
+			       asn::encode((int) (mtime * 1000.0)), str));
+    return (str + "\0\0\0\0\0\0\0")[.. 7];
 }

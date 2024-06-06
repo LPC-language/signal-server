@@ -26,6 +26,7 @@
 # include "chat/Keys.c"
 # include "chat/Accounts.c"
 # include "chat/Websocket.c"
+# include "chat/Certificate.c"
 
 # else
 
@@ -33,5 +34,6 @@ inherit "chat/Registration";
 inherit "chat/Keys";
 inherit "chat/Accounts";
 inherit "chat/Websocket";
+inherit "chat/Certificate";
 
 # endif
