@@ -147,6 +147,15 @@ static int respond(int code, string type, StringBuffer entity,
 }
 
 /*
+ * respond with JSON body
+ */
+static int respondJson(int code, mapping entity, varargs mapping extraHeaders)
+{
+    return respond(code, "application/json;charset=utf-8",
+		   new StringBuffer(json::encode(entity)), extraHeaders);
+}
+
+/*
  * handle a REST call
  */
 private int call(StringBuffer entity)

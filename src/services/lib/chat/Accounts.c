@@ -73,7 +73,7 @@ static void putAccountsGcm2(string accountId, int deviceId, string gcmId)
 
 static void putAccountsGcm3()
 {
-    respond(HTTP_OK, "application/json;charset=utf-8", new StringBuffer("{}"));
+    respondJson(HTTP_OK, ([ ]));
 }
 
 # endif

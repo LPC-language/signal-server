@@ -93,7 +93,7 @@ static void putKeys3(int deviceId, mapping *preKeys, string id)
  */
 static void putKeys4()
 {
-    respond(HTTP_OK, "application/json;charset=utf-8", new StringBuffer("{}"));
+    respondJson(HTTP_OK, ([ ]));
 }
 
 /*

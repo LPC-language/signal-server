@@ -71,8 +71,7 @@ private int respondVerification(mapping session, varargs int code)
 	entity["nextVerificationAttempt"] = 0;
     }
 
-    return respond((code) ? code : HTTP_OK, "application/json;charset=utf-8",
-		   new StringBuffer(json::encode(entity)));
+    return respondJson((code) ? code : HTTP_OK, entity);
 }
 
 /*
@@ -260,17 +259,13 @@ static Account postRegistration3(Account account)
  */
 static void postRegistration4(Account account)
 {
-    mapping entity;
-
-    entity = ([
+    respondJson(HTTP_OK, ([
 	"uuid" : uuid::encode(account->id()),
 	"number" : account->phoneNumber(),
 	"pni" : uuid::encode(account->pni()),
 	/* userNameHash : null */
 	"storageCapable" : account->device(1)->capStorage()
-    ]);
-    respond(HTTP_OK, "application/json;charset=utf-8",
-	    new StringBuffer(json::encode(entity)));
+    ]));
 }
 
 # endif

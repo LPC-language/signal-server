@@ -76,8 +76,7 @@ static void getCertificateDelivery2(int deviceId, Account account)
 
     str = base64::encode(CERT_SERVER->generate(account, deviceId,
 					       account->phoneNumber()));
-    respond(HTTP_OK, "application/json;charset=utf-8",
-	    new StringBuffer(json::encode(([ "certificate" : str ]))));
+    respondJson(HTTP_OK, ([ "certificate" : str ]));
 }
 
 # endif

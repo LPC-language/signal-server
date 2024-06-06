@@ -37,8 +37,7 @@ inherit json "/lib/util/json";
  */
 static int getConfig(HttpAuthentication authorization)
 {
-    return respond(HTTP_OK, "application/json;charset=utf-8",
-		   new StringBuffer(json::encode(([ "config" : ({ }) ]))));
+    return respondJson(HTTP_OK, ([ "config" : ({ }) ]));
 }
 
 # endif
