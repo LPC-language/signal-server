@@ -18,24 +18,27 @@
 
 # ifdef REGISTER
 
-/*
- * register REST API endpoints
- */
-
-# include "chat/Registration.c"
-# include "chat/Keys.c"
-# include "chat/Accounts.c"
-# include "chat/Websocket.c"
-# include "chat/Certificate.c"
-# include "chat/Config.c"
+register(CHAT_SERVER, "GET", "/v1/config",
+	 "getConfig", argHeader("Authorization"));
 
 # else
 
-inherit "chat/Registration";
-inherit "chat/Keys";
-inherit "chat/Accounts";
-inherit "chat/Websocket";
-inherit "chat/Certificate";
-inherit "chat/Config";
+# include <String.h>
+# include "~HTTP/HttpResponse.h"
+# include "~HTTP/HttpField.h"
+# include "rest.h"
+
+inherit RestServer;
+inherit json "/lib/util/json";
+
+
+/*
+ * default configuration
+ */
+static int getConfig(HttpAuthentication authorization)
+{
+    return respond(HTTP_OK, "application/json;charset=utf-8",
+		   new StringBuffer(json::encode(([ "config" : ({ }) ]))));
+}
 
 # endif
