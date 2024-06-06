@@ -28,6 +28,8 @@ private inherit base64 "/lib/util/base64";
 private inherit json "/lib/util/json";
 
 
+# define ATTEMPTS	3	/* number of times to try */
+
 object tokenClient;	/* obtain a firebase access token */
 string accessToken;	/* firebase access token */
 mixed **queue;		/* message queue */
@@ -98,14 +100,14 @@ static void started(int code)
  */
 static void sendMessage()
 {
-    string target, type, message;
-    int urgent;
+    int attempts, urgent;
     Continuation callback;
+    string target, type, message;
 
     if (!active) {
 	startConnection();
     } else {
-	({ target, type, message, urgent, callback }) = queue[0];
+	({ attempts, callback, target, type, message, urgent }) = queue[0];
 	message = "{\"message\":{\"token\":\"" + target + "\"," +
 		  "\"data\":{\"" + type + "\":\"" + message + "\"}," +
 		  "\"android\":{\"priority\":\"" +
@@ -128,9 +130,18 @@ static void response(int code, StringBuffer entity)
 
     requested = FALSE;
     switch (code) {
-    case HTTP_OK:
     case HTTP_NOT_FOUND:
-	callback = queue[0][4];
+	/*
+	 * Firebase sometimes responds "Requested entity was not found",
+	 * which presumably refers to the token.  Try a few times.
+	 */
+	if (--queue[0][0] > 0) {
+	    call_out("sendMessage", 0);
+	    break;
+	}
+	/* fall through */
+    case HTTP_OK:
+	callback = queue[0][1];
 	if (callback) {
 	    callback->runNext(code);
 	}
@@ -222,7 +233,7 @@ static void storeAccessToken(int code, StringBuffer entity)
 static void enqueue(string target, string type, string message, int urgent,
 		    Continuation callback)
 {
-    queue += ({ ({ target, type, message, urgent, callback }) });
+    queue += ({ ({ ATTEMPTS, callback, target, type, message, urgent }) });
     if (sizeof(queue) == 1) {
 	if (!accessToken) {
 	    getAccessToken();
