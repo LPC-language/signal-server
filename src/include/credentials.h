@@ -16,28 +16,4 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * initialize message server
- */
-static void create()
-{
-    compile_object("api/lib/TlsClientSession");
-    compile_object("lib/KVstoreExp");
-    compile_object("lib/Device");
-    compile_object("lib/Account");
-    compile_object("lib/Profile");
-    compile_object("obj/oneshot");
-    compile_object("obj/fcm_sender");
-    compile_object("obj/kvnode_exp");
-    compile_object("sys/tls_server");
-    compile_object("sys/rest_api");
-    compile_object("sys/cert");
-    compile_object("sys/credentials");
-    compile_object("sys/registration");
-    compile_object("sys/fcm_relay");
-    compile_object("sys/accounts");
-    compile_object("sys/pni");
-    compile_object("sys/keys");
-    compile_object("sys/profiles");
-    compile_object("services/obj/server");
-}
+# define CREDENTIALS_SERVER	"/usr/MsgServer/sys/credentials"

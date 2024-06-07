@@ -16,28 +16,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+# ifdef REGISTER
+
+register(CHAT_SERVER, "GET", "/v1/storage/auth",
+	 "getStorageAuth", argHeaderAuth());
+
+# else
+
+# include "~HTTP/HttpResponse.h"
+# include "account.h"
+# include "credentials.h"
+
+inherit "../RestServer";
+private inherit uuid "~/lib/uuid";
+
+
 /*
- * initialize message server
+ * storage credentials
  */
-static void create()
+static void getStorageAuth(Account account, Device device)
 {
-    compile_object("api/lib/TlsClientSession");
-    compile_object("lib/KVstoreExp");
-    compile_object("lib/Device");
-    compile_object("lib/Account");
-    compile_object("lib/Profile");
-    compile_object("obj/oneshot");
-    compile_object("obj/fcm_sender");
-    compile_object("obj/kvnode_exp");
-    compile_object("sys/tls_server");
-    compile_object("sys/rest_api");
-    compile_object("sys/cert");
-    compile_object("sys/credentials");
-    compile_object("sys/registration");
-    compile_object("sys/fcm_relay");
-    compile_object("sys/accounts");
-    compile_object("sys/pni");
-    compile_object("sys/keys");
-    compile_object("sys/profiles");
-    compile_object("services/obj/server");
+    call_out("getStorageAuth2", 0, account->id());
 }
+
+static void getStorageAuth2(string id)
+{
+    string username, password;
+
+    ({
+	username,
+	password
+    }) = CREDENTIALS_SERVER->generate(uuid::encode(id), FALSE, TRUE, TRUE);
+    respondJson(HTTP_OK, ([ "username" : username, "password" : password ]));
+}
+
+# endif
