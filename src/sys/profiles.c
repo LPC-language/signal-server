@@ -16,11 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# define Account		object "/usr/MsgServer/lib/Account"
-# define Device			object "/usr/MsgServer/lib/Device"
-# define Profile		object "/usr/MsgServer/lib/Profile"
 
-# define ACCOUNT_SERVER		"/usr/MsgServer/sys/accounts"
-# define PNI_SERVER		"/usr/MsgServer/sys/pni"
-# define KEYS_SERVER		"/usr/MsgServer/sys/keys"
-# define PROFILE_SERVER		"/usr/MsgServer/sys/profiles"
+# include <KVstore.h>
+# include "account.h"
+
+
+object profiles;	/* id : profile */
+
+/*
+ * initialize profile server
+ */
+static void create()
+{
+    profiles = new KVstore(100);
+}
+
+Profile get(string id, string version)
+{
+    Profile profile;
+
+    id = version + id;
+    profile = profiles[id];
+    if (!profile) {
+	profile = profiles[id] = new Profile(version);
+    }
+    return profile;
+}
