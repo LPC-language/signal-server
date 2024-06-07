@@ -19,25 +19,27 @@
 # ifdef REGISTER
 
 register(CHAT_SERVER, "GET", "/v1/config",
-	 "getConfig", argHeader("Authorization"));
+	 "getConfig", argHeaderAuth());
 
 # else
 
-# include <String.h>
 # include "~HTTP/HttpResponse.h"
-# include "~HTTP/HttpField.h"
-# include "rest.h"
+# include "account.h"
 
-inherit RestServer;
-inherit json "/lib/util/json";
+inherit "../RestServer";
 
 
 /*
  * default configuration
  */
-static int getConfig(HttpAuthentication authorization)
+static void getConfig(Account account, Device device)
 {
-    return respondJson(HTTP_OK, ([ "config" : ({ }) ]));
+    call_out("getConfig2", 0);
+}
+
+static void getConfig2()
+{
+    respondJson(HTTP_OK, ([ "config" : ({ }) ]));
 }
 
 # endif

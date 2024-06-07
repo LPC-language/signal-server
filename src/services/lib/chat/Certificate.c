@@ -19,64 +19,33 @@
 # ifdef REGISTER
 
 register(CHAT_SERVER, "GET", "/v1/certificate/delivery",
-	 "getCertificateDelivery", argHeader("Authorization"));
+	 "getCertificateDelivery", argHeaderAuth());
 
 # else
 
-# include <String.h>
-# include <Continuation.h>
 # include "~HTTP/HttpResponse.h"
-# include "~HTTP/HttpField.h"
-# include "rest.h"
 # include "account.h"
 # include "certificate.h"
 
-inherit RestServer;
-private inherit "/lib/util/ascii";
+inherit "../RestServer";
 private inherit base64 "/lib/util/base64";
-private inherit json "/lib/util/json";
-private inherit uuid "~/lib/uuid";
 
 
 /*
  * get SenderCertificate
  */
-static int getCertificateDelivery(HttpAuthentication authorization)
+static void getCertificateDelivery(Account account, Device device)
 {
-    string uuid;
-    int deviceId;
-
-    if (!authorization || lower_case(authorization->scheme()) != "basic") {
-	return respond(HTTP_BAD_REQUEST, nil, nil);
-    }
-    sscanf(base64::decode(authorization->authentication()), "%s:", uuid);
-    deviceId = 1;
-    sscanf(uuid, "%s.%d", uuid, deviceId);
-    uuid = uuid::decode(uuid);
-
-    new Continuation("getCertificateDelivery1", uuid)
-	->chain("getCertificateDelivery2", deviceId)
-	->runNext();
+    call_out("getCertificateDelivery2", 0, account, device->id());
 }
 
-/*
- * get account
- */
-static Account getCertificateDelivery1(string accountId)
+static void getCertificateDelivery2(Account account, int deviceId)
 {
-    return ACCOUNT_SERVER->get(accountId);
-}
-
-/*
- * get certificate for account/device/phonenumber
- */
-static void getCertificateDelivery2(int deviceId, Account account)
-{
-    string str;
-
-    str = base64::encode(CERT_SERVER->generate(account, deviceId,
-					       account->phoneNumber()));
-    respondJson(HTTP_OK, ([ "certificate" : str ]));
+    respondJson(HTTP_OK, ([
+	"certificate" :
+	base64::encode(CERT_SERVER->generate(account, deviceId,
+					     account->phoneNumber()))
+    ]));
 }
 
 # endif

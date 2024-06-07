@@ -19,59 +19,33 @@
 # ifdef REGISTER
 
 register(CHAT_SERVER, "PUT", "/v1/accounts/gcm/",
-	 "putAccountsGcm", argHeader("Authorization"), argEntityJson());
+	 "putAccountsGcm", argHeaderAuth(), argEntityJson());
 
 # else
 
-# include <String.h>
-# include <Continuation.h>
 # include "~HTTP/HttpResponse.h"
-# include "~HTTP/HttpField.h"
-# include "rest.h"
 # include "account.h"
 
-inherit RestServer;
-private inherit "/lib/util/ascii";
-private inherit base64 "/lib/util/base64";
-private inherit uuid "~/lib/uuid";
+inherit "../RestServer";
 
 
 /*
  * set gcmId for device
  */
-static int putAccountsGcm(HttpAuthentication authorization, mapping entity)
+static void putAccountsGcm(Account account, Device device, mapping entity)
 {
-    string uuid;
-    int deviceId;
+    string gcmId;
 
-    if (!authorization || lower_case(authorization->scheme()) != "basic") {
-	return respond(HTTP_BAD_REQUEST, nil, nil);
-    }
-    sscanf(base64::decode(authorization->authentication()), "%s:", uuid);
-    deviceId = 1;
-    sscanf(uuid, "%s.%d", uuid, deviceId);
-    uuid = uuid::decode(uuid);
-
-    new Continuation("putAccountsGcm2", uuid, deviceId,
-		     entity["gcmRegistrationId"])
-	->add("putAccountsGcm3")
-	->runNext();
-}
-
-static void putAccountsGcm2(string accountId, int deviceId, string gcmId)
-{
-    Account account;
-    Device device;
-
-    account = ACCOUNT_SERVER->get(accountId);
-    device = account->device(deviceId);
+    gcmId = entity["gcmRegistrationId"];
     if (gcmId != device->gcmId()) {
 	device->setGcmId(gcmId);
 	device->setFetchesMessages(FALSE);
     }
+
+    call_out("putAccountsGcm2", 0);
 }
 
-static void putAccountsGcm3()
+static void putAccountsGcm2()
 {
     respondJson(HTTP_OK, ([ ]));
 }

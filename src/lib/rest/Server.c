@@ -156,40 +156,63 @@ static int respondJson(int code, mapping entity, varargs mapping extraHeaders)
 }
 
 /*
+ * substitute argument
+ */
+static mixed substArg(HttpRequest request, StringBuffer entity, mixed *args,
+		      int i, mixed *handle)
+{
+    mixed arg;
+
+    if (typeof(args[i]) == T_STRING) {
+	arg = request->headerValue(args[i]);
+	if (typeof(arg) == T_ARRAY && sizeof(arg) == 1) {
+	    arg = arg[0];
+	}
+	return arg;
+    } else {
+	switch (args[i]) {
+	case ARG_ENTITY:
+	    return entity;
+
+	case ARG_ENTITY_JSON:
+	    try {
+		arg = request->headerValue("Content-Type");
+		if (lower_case(arg) != "application/json") {
+		    error("Content-Type not JSON");
+		}
+		return json::decode(entity->chunk());
+	    } catch (...) {
+		return respond(HTTP_BAD_REQUEST, nil, nil);
+	    }
+	    break;
+
+	default:
+	    error("Unkown argument type");
+	}
+    }
+}
+/*
  * handle a REST call
  */
 private int call(StringBuffer entity)
 {
     mixed *args, arg;
     int i;
-    string str;
 
     args = handle[2 ..];
     for (i = sizeof(args); --i >= 0; ) {
-	if (typeof(args[i]) == T_STRING) {
-	    arg = request->headerValue(args[i]);
-	    if (typeof(arg) == T_ARRAY && sizeof(arg) == 1) {
-		arg = arg[0];
-	    }
-	    args[i] = arg;
-	} else {
-	    switch (args[i]) {
-	    case ARG_ENTITY:
-		args[i] = entity;
-		break;
+	arg = substArg(request, entity, args, i, handle);
+	switch (typeof(arg)) {
+	case T_INT:
+	    return arg;
 
-	    case ARG_ENTITY_JSON:
-		try {
-		    str = request->headerValue("Content-Type");
-		    if (lower_case(str) != "application/json") {
-			error("Content-Type not JSON");
-		    }
-		    args[i] = json::decode(entity->chunk());
-		} catch (...) {
-		    return respond(HTTP_BAD_REQUEST, nil, nil);
-		}
-		break;
-	    }
+	case T_ARRAY:
+	    args = args[.. i - 1] + arg + args[i + 1 ..];
+	    break;
+
+	default:
+	    args[i] = arg;
+	    break;
 	}
     }
 

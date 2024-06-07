@@ -19,71 +19,40 @@
 # ifdef REGISTER
 
 register(CHAT_SERVER, "PUT", "/v2/keys/?identity=aci",
-	 "putKeysAci", argHeader("Authorization"), argEntityJson());
+	 "putKeysAci", argHeaderAuth(), argEntityJson());
 register(CHAT_SERVER, "PUT", "/v2/keys/?identity=pni",
-	 "putKeysPni", argHeader("Authorization"), argEntityJson());
+	 "putKeysPni", argHeaderAuth(), argEntityJson());
 
 # else
 
-# include <String.h>
 # include <Continuation.h>
 # include "~HTTP/HttpResponse.h"
-# include "~HTTP/HttpField.h"
-# include "rest.h"
 # include "account.h"
 
-inherit RestServer;
-private inherit "/lib/util/ascii";
-private inherit base64 "/lib/util/base64";
-private inherit uuid "~/lib/uuid";
+inherit "../RestServer";
 
 
 /*
  * add keys to the server
  */
-static int putKeysAci(HttpAuthentication authorization, mapping entity)
+static void putKeysAci(Account account, Device device, mapping entity)
 {
-    string uuid;
-    int deviceId;
+    mapping signedPreKey;
 
-    if (!authorization || lower_case(authorization->scheme()) != "basic") {
-	return respond(HTTP_BAD_REQUEST, nil, nil);
-    }
-    sscanf(base64::decode(authorization->authentication()), "%s:", uuid);
-    deviceId = 1;
-    sscanf(uuid, "%s.%d", uuid, deviceId);
-    uuid = uuid::decode(uuid);
-
-    new Continuation("putKeysAci2", uuid, deviceId, entity["identityKey"],
-		     entity["signedPreKey"])
-	->chain("putKeys3", deviceId, entity["preKeys"])
-	->add("putKeys4")
-	->runNext();
-}
-
-/*
- * update account.identityKey and device.signedPreKey
- */
-static string putKeysAci2(string accountId, int deviceId, string identityKey,
-			  mapping signedPreKey)
-{
-    Account account;
-    Device device;
-
-    account = ACCOUNT_SERVER->get(accountId);
-    device = account->device(deviceId);
-
-    account->updateIdentityKey(identityKey);
+    account->updateIdentityKey(entity["identityKey"]);
+    signedPreKey = entity["signedPreKey"];
     device->updateSignedPreKey(signedPreKey["keyId"], signedPreKey["publicKey"],
 			       signedPreKey["signature"]);
 
-    return accountId;
+    new Continuation("putKeys2", account->id(), device->id(), entity["preKeys"])
+	->add("putKeys3")
+	->runNext();
 }
 
 /*
  * store preKeys
  */
-static void putKeys3(int deviceId, mapping *preKeys, string id)
+static void putKeys2(string id, int deviceId, mapping *preKeys)
 {
     KEYS_SERVER->store(id, deviceId, preKeys);
 }
@@ -91,7 +60,7 @@ static void putKeys3(int deviceId, mapping *preKeys, string id)
 /*
  * respond
  */
-static void putKeys4()
+static void putKeys3()
 {
     respondJson(HTTP_OK, ([ ]));
 }
@@ -99,44 +68,20 @@ static void putKeys4()
 /*
  * add keys to the server
  */
-static int putKeysPni(HttpAuthentication authorization, mapping entity)
+static void putKeysPni(Account account, Device device, mapping entity)
 {
-    string uuid;
-    int deviceId;
+    mapping signedPreKey;
 
-    if (!authorization || lower_case(authorization->scheme()) != "basic") {
-	return respond(HTTP_BAD_REQUEST, nil, nil);
-    }
-    sscanf(base64::decode(authorization->authentication()), "%s:", uuid);
-    deviceId = 1;
-    sscanf(uuid, "%s.%d", uuid, deviceId);
-    uuid = uuid::decode(uuid);
-
-    new Continuation("putKeysPni2", uuid, deviceId, entity["identityKey"],
-		     entity["signedPreKey"])
-	->chain("putKeys3", deviceId, entity["preKeys"])
-	->add("putKeys4")
-	->runNext();
-}
-
-/*
- * update account.pniKey and device.signedPniPreKey
- */
-static string putKeysPni2(string accountId, int deviceId, string identityKey,
-			  mapping signedPreKey)
-{
-    Account account;
-    Device device;
-
-    account = ACCOUNT_SERVER->get(accountId);
-    device = account->device(deviceId);
-
-    account->updatePniKey(identityKey);
+    account->updatePniKey(entity["identityKey"]);
+    signedPreKey = entity["signedPreKey"];
     device->updateSignedPniPreKey(signedPreKey["keyId"],
 				  signedPreKey["publicKey"],
 				  signedPreKey["signature"]);
 
-    return account->pni();
+    new Continuation("putKeys2", account->pni(), device->id(),
+		     entity["preKeys"])
+	->add("putKeys3")
+	->runNext();
 }
 
 # endif

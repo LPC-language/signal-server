@@ -83,9 +83,21 @@ void setId(string id)
     }
 }
 
-Device device(int deviceId)
+Device device(int deviceId, varargs string password)
 {
-    return devices[deviceId];
+    Device device;
+    string tokenHash, salt;
+
+    device = devices[deviceId];
+    if (device) {
+	if (!password) {
+	    return device;
+	}
+	({ tokenHash, salt }) = device->authTokenHash();
+	if (hash(password, salt)[0] == tokenHash) {
+	    return device;
+	}
+    }
 }
 
 void updateIdentityKey(string key)
