@@ -45,7 +45,7 @@ static void putKeysAci(Account account, Device device, mapping entity)
 			       signedPreKey["signature"]);
 
     new Continuation("putKeys2", account->id(), device->id(), entity["preKeys"])
-	->add("putKeys3")
+	->add("respondJsonOK")
 	->runNext();
 }
 
@@ -55,14 +55,6 @@ static void putKeysAci(Account account, Device device, mapping entity)
 static void putKeys2(string id, int deviceId, mapping *preKeys)
 {
     KEYS_SERVER->store(id, deviceId, preKeys);
-}
-
-/*
- * respond
- */
-static void putKeys3()
-{
-    respondJson(HTTP_OK, ([ ]));
 }
 
 /*
@@ -80,7 +72,7 @@ static void putKeysPni(Account account, Device device, mapping entity)
 
     new Continuation("putKeys2", account->pni(), device->id(),
 		     entity["preKeys"])
-	->add("putKeys3")
+	->add("respondJsonOK")
 	->runNext();
 }
 

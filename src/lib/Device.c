@@ -16,22 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# define CAP_ANNOUNCEMENT_GROUP	0
-# define CAP_CHANGE_NUMBER	1
-# define CAP_GIFT_BADGES	2
-# define CAP_PAYMENT_ACTIVATION	3
-# define CAP_PNI		4
-# define CAP_SENDER_KEY		5
-# define CAP_STORAGE		6
-# define CAP_STORIES		7
-# define CAP_UUID		8
+private inherit "hash";
+
+
+# define FETCHES_MESSAGES	0
+# define ANNOUNCEMENT_GROUP	1
+# define CHANGE_NUMBER		2
+# define GIFT_BADGES		3
+# define PAYMENT_ACTIVATION	4
+# define PNI			5
+# define SENDER_KEY		6
+# define STORAGE		7
+# define STORIES		8
+# define UUID			9
 
 private int id;
 private int registrationId;
-private int fetchesMessages;
 private string authToken;
 private string salt;
 private string name;
+private string agent;
 private int pkId;
 private string preKey;
 private string pkSignature;
@@ -44,26 +48,36 @@ private int cap;		/* capabilities */
 /*
  * initialize device
  */
-static void create(int capAnnouncementGroup, int capChangeNumber,
-		   int capGiftBadges, int capPaymentActivation, int capPni,
-		   int capSenderKey, int capStorage, int capStories,
-		   int capUuid)
-{
-    id = 1;
-    cap |= capAnnouncementGroup <<	CAP_ANNOUNCEMENT_GROUP;
-    cap |= capChangeNumber <<		CAP_CHANGE_NUMBER;
-    cap |= capGiftBadges <<		CAP_GIFT_BADGES;
-    cap |= capPaymentActivation <<	CAP_PAYMENT_ACTIVATION;
-    cap |= capPni <<			CAP_PNI;
-    cap |= capSenderKey <<		CAP_SENDER_KEY;
-    cap |= capStorage <<		CAP_STORAGE;
-    cap |= capStories <<		CAP_STORIES;
-    cap |= capUuid <<			CAP_UUID;
-}
-
-void setId(int id)
+static void create(int id, string password)
 {
     ::id = id;
+    ({ authToken, salt }) = hash(password);
+}
+
+void update(string name, int registrationId, string agent, int fetchesMessages,
+	    int capAnnouncementGroup, int capChangeNumber, int capGiftBadges,
+	    int capPaymentActivation, int capPni, int capSenderKey,
+	    int capStorage, int capStories, int capUuid)
+{
+    ::name = name;
+    ::registrationId = registrationId;
+    ::agent = agent;
+    cap = 0;
+    cap |= fetchesMessages <<		FETCHES_MESSAGES;
+    cap |= capAnnouncementGroup <<	ANNOUNCEMENT_GROUP;
+    cap |= capChangeNumber <<		CHANGE_NUMBER;
+    cap |= capGiftBadges <<		GIFT_BADGES;
+    cap |= capPaymentActivation <<	PAYMENT_ACTIVATION;
+    cap |= capPni <<			PNI;
+    cap |= capSenderKey <<		SENDER_KEY;
+    cap |= capStorage <<		STORAGE;
+    cap |= capStories <<		STORIES;
+    cap |= capUuid <<			UUID;
+}
+
+int verifyPassword(string password)
+{
+    return (authToken == hash(password, salt)[0]);
 }
 
 void setRegistrationId(int registrationId)
@@ -73,18 +87,8 @@ void setRegistrationId(int registrationId)
 
 void setFetchesMessages(int fetchesMessages)
 {
-    ::fetchesMessages = fetchesMessages;
-}
-
-void setAuthTokenHash(string authToken, string salt)
-{
-    ::authToken = authToken;
-    ::salt = salt;
-}
-
-void setName(string name)
-{
-    ::name = name;
+    cap = cap & ~(1 << FETCHES_MESSAGES) |
+	  (fetchesMessages << FETCHES_MESSAGES);
 }
 
 void setGcmId(string gcmId)
@@ -137,16 +141,16 @@ mixed *signedPniPreKey()
 
 int id()			{ return id; }
 int registrationId()		{ return registrationId; }
-int fetchesMessages()		{ return fetchesMessages; }
 string *authTokenHash()		{ return ({ authToken, salt }); }
 string name()			{ return name; }
 string gcmId()			{ return gcmId; }
-int capAnnouncementGroup()	{ return (cap >> CAP_ANNOUNCEMENT_GROUP) & 1; }
-int capChangeNumber()		{ return (cap >> CAP_CHANGE_NUMBER) & 1; }
-int capGiftBadges()		{ return (cap >> CAP_GIFT_BADGES) & 1; }
-int capPaymentActivation()	{ return (cap >> CAP_PAYMENT_ACTIVATION) & 1; }
-int capPni()			{ return (cap >> CAP_PNI) & 1; }
-int capSenderKey()		{ return (cap >> CAP_SENDER_KEY) & 1; }
-int capStorage()		{ return (cap >> CAP_STORAGE) & 1; }
-int capStories()		{ return (cap >> CAP_STORIES) & 1; }
-int capUuid()			{ return (cap >> CAP_UUID) & 1; }
+int fetchesMessages()		{ return (cap >> FETCHES_MESSAGES) & 1; }
+int capAnnouncementGroup()	{ return (cap >> ANNOUNCEMENT_GROUP) & 1; }
+int capChangeNumber()		{ return (cap >> CHANGE_NUMBER) & 1; }
+int capGiftBadges()		{ return (cap >> GIFT_BADGES) & 1; }
+int capPaymentActivation()	{ return (cap >> PAYMENT_ACTIVATION) & 1; }
+int capPni()			{ return (cap >> PNI) & 1; }
+int capSenderKey()		{ return (cap >> SENDER_KEY) & 1; }
+int capStorage()		{ return (cap >> STORAGE) & 1; }
+int capStories()		{ return (cap >> STORIES) & 1; }
+int capUuid()			{ return (cap >> UUID) & 1; }

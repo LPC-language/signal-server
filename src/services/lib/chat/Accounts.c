@@ -20,6 +20,9 @@
 
 register(CHAT_SERVER, "PUT", "/v1/accounts/gcm/",
 	 "putAccountsGcm", argHeaderAuth(), argEntityJson());
+register(CHAT_SERVER, "PUT", "/v1/accounts/attributes/",
+	 "putAccountsAttributes", argHeaderAuth(), argHeader("X-Signal-Agent"),
+	 argEntityJson());
 
 # else
 
@@ -42,12 +45,28 @@ static void putAccountsGcm(Account account, Device device, mapping entity)
 	device->setFetchesMessages(FALSE);
     }
 
-    call_out("putAccountsGcm2", 0);
+    call_out("respondJsonOK", 0);
 }
 
-static void putAccountsGcm2()
+static void putAccountsAttributes(Account account, Device device, string agent,
+				  mapping entity)
 {
-    respondJson(HTTP_OK, ([ ]));
+    mapping cap;
+
+    cap = entity["capabilities"];
+    device->update(entity["name"], entity["registrationId"], agent,
+		   entity["fetchesMessages"], cap["announcementGroup"],
+		   cap["changeNumber"], cap["giftBadges"],
+		   cap["paymentActivation"], cap["pni"], cap["senderKey"],
+		   cap["storage"], cap["stories"], cap["uuid"]);
+    account->update(entity["discoverableByPhoneNumber"], entity["pin"],
+		    entity["pniRegistrationId"], entity["recoveryPassword"],
+		    entity["registrationLock"], entity["signalingKey"],
+		    entity["unidentifiedAccessKey"],
+		    entity["unrestrictedUnidentifiedAccess"], entity["video"],
+		    entity["voice"]);
+
+    call_out("respondJsonOK", 0);
 }
 
 # endif

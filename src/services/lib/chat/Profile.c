@@ -38,7 +38,7 @@ static void putProfile(Account account, Device device, mapping entity)
 {
     /* XXX ignore badges */
     new Continuation("putProfile2", account->id(), entity)
-	->add("putProfile3")
+	->add("respondJsonOK")
 	->runNext();
 }
 
@@ -51,11 +51,6 @@ static void putProfile2(string accountId, mapping entity)
     profile->update(entity["name"], nil, entity["aboutEmoji"], entity["about"],
 		    entity["paymentAddress"],
 		    base64::decode(entity["commitment"]));
-}
-
-static void putProfile3()
-{
-    respondJson(HTTP_OK, ([ ]));
 }
 
 # endif

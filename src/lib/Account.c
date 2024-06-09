@@ -18,8 +18,6 @@
 
 # include "account.h"
 
-private inherit "hash";
-
 
 # define DISCOVERABLE		0
 # define UNIDENTIFIED_ACCESS	1
@@ -30,7 +28,6 @@ private string id;
 private mapping devices;
 private string phoneNumber;
 private string pni;
-private string agent;
 private string pin;
 private int pniRegistrationId;
 private string recoveryPassword;
@@ -44,33 +41,29 @@ private int flags;
 /*
  * initialize Account
  */
-static void create(string phoneNumber, string pni, string password,
-		   string agent, Device device, int discoverable,
-		   int fetchesMessages, string name, string pin,
-		   int pniRegistrationId, string recoveryPassword,
-		   int registrationId, string registrationLock,
-		   string signalingKey, string unidentifiedAccessKey,
-		   int unidentifiedAccess, int video, int voice)
+static void create(string phoneNumber, string pni, Device device)
 {
     ::phoneNumber = phoneNumber;
     ::pni = pni;
-    ::agent = agent;
     devices = ([ device->id() : device ]);
-    device->setRegistrationId(registrationId);
-    device->setFetchesMessages(fetchesMessages);
-    device->setAuthTokenHash(hash(password)...);
-    device->setName(name);
+}
 
+static void update(int discoverable, string pin, int pniRegistrationId,
+		   string recoveryPassword, string registrationLock,
+		   string signalingKey, string unidentifiedAccessKey,
+		   int unidentifiedAccess, int video, int voice)
+{
     ::pin = pin;
     ::pniRegistrationId = pniRegistrationId;
     ::recoveryPassword = recoveryPassword;
     ::registrationLock = registrationLock;
     ::signalingKey = signalingKey;
     ::unidentifiedAccessKey = unidentifiedAccessKey;
-    flags |= discoverable << DISCOVERABLE;
-    flags |= unidentifiedAccess << UNIDENTIFIED_ACCESS;
-    flags |= video << VIDEO;
-    flags |= voice << VOICE;
+    flags = 0;
+    flags |= discoverable <<		DISCOVERABLE;
+    flags |= unidentifiedAccess <<	UNIDENTIFIED_ACCESS;
+    flags |= video <<			VIDEO;
+    flags |= voice <<			VOICE;
 }
 
 /*
@@ -83,21 +76,9 @@ void setId(string id)
     }
 }
 
-Device device(int deviceId, varargs string password)
+Device device(int deviceId)
 {
-    Device device;
-    string tokenHash, salt;
-
-    device = devices[deviceId];
-    if (device) {
-	if (!password) {
-	    return device;
-	}
-	({ tokenHash, salt }) = device->authTokenHash();
-	if (hash(password, salt)[0] == tokenHash) {
-	    return device;
-	}
-    }
+    return devices[deviceId];
 }
 
 void updateIdentityKey(string key)
@@ -124,7 +105,6 @@ void updatePniKey(string key)
 string id()			{ return id; }
 string phoneNumber()		{ return phoneNumber; }
 string pni()			{ return pni; }
-string agent()			{ return agent; }
 int discoverable()		{ return (flags >> DISCOVERABLE) & 1; }
 string pin()			{ return pin; }
 int pniRegistrationId()		{ return pniRegistrationId; }

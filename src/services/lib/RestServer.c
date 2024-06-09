@@ -78,8 +78,8 @@ static void authCall(string accountId, int deviceId, string password,
 
     account = ACCOUNT_SERVER->get(accountId);
     if (account) {
-	device = account->device(deviceId, password);
-	if (device) {
+	device = account->device(deviceId);
+	if (device && device->verifyPassword(password)) {
 	    call_other(this_object(), handle[0],
 		       (handle[1] + ({ account, device }) + args)...);
 	    return;
@@ -87,4 +87,9 @@ static void authCall(string accountId, int deviceId, string password,
     }
 
     respond(HTTP_UNAUTHORIZED, nil, nil);
+}
+
+static void respondJsonOK()
+{
+    respondJson(HTTP_OK, ([ ]));
 }

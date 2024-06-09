@@ -228,20 +228,24 @@ static Account postRegistration2(string phoneNumber, string password,
 {
     mapping cap;
     Device device;
+    Account account;
 
     cap = attr["capabilities"];
-    device = new Device(cap["announcementGroup"], cap["changeNumber"],
-			cap["giftBadges"], cap["paymentActivation"],
-			cap["pni"], cap["senderKey"], cap["storage"],
-			cap["stories"], cap["uuid"]);
-    return new Account(phoneNumber, PNI_SERVER->getId(phoneNumber), password,
-		       agent, device, attr["discoverableByPhoneNumber"],
-		       attr["fetchesMessages"], attr["name"], attr["pin"],
-		       attr["pniRegistrationId"], attr["recoveryPassword"],
-		       attr["registrationId"], attr["registrationLock"],
-		       attr["signalingKey"], attr["unidentifiedAccessKey"],
-		       attr["unrestrictedUnidentifiedAccess"], attr["video"],
-		       attr["voice"]);
+    device = new Device(1, password);
+    device->update(attr["name"], attr["registrationId"], agent,
+		   attr["fetchesMessages"], cap["announcementGroup"],
+		   cap["changeNumber"], cap["giftBadges"],
+		   cap["paymentActivation"], cap["pni"], cap["senderKey"],
+		   cap["storage"], cap["stories"], cap["uuid"]);
+    account = new Account(phoneNumber, PNI_SERVER->getId(phoneNumber), device);
+    account->update(attr["discoverableByPhoneNumber"], attr["pin"],
+		    attr["pniRegistrationId"], attr["recoveryPassword"],
+		    attr["registrationLock"], attr["signalingKey"],
+		    attr["unidentifiedAccessKey"],
+		    attr["unrestrictedUnidentifiedAccess"], attr["video"],
+		    attr["voice"]);
+
+    return account;
 }
 
 /*
