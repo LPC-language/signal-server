@@ -27,7 +27,7 @@ register(CHAT_SERVER, "PUT", "/v1/profile/",
 # include "~HTTP/HttpResponse.h"
 # include "account.h"
 
-inherit "../RestServer";
+inherit "RestServer";
 inherit base64 "/lib/util/base64";
 
 

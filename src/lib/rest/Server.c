@@ -156,6 +156,14 @@ static int respondJson(int code, mapping entity, varargs mapping extraHeaders)
 }
 
 /*
+ * respond OK with empty JSON body
+ */
+static int respondJsonOK(varargs mapping extraHeaders)
+{
+    return respondJson(HTTP_OK, ([ ]), extraHeaders);
+}
+
+/*
  * substitute argument
  */
 static mixed substArg(HttpRequest request, StringBuffer entity, mixed *args,

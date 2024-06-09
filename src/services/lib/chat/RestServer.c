@@ -88,8 +88,3 @@ static void authCall(string accountId, int deviceId, string password,
 
     respond(HTTP_UNAUTHORIZED, nil, nil);
 }
-
-static void respondJsonOK()
-{
-    respondJson(HTTP_OK, ([ ]));
-}

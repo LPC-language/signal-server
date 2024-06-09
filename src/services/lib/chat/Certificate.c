@@ -27,7 +27,7 @@ register(CHAT_SERVER, "GET", "/v1/certificate/delivery",
 # include "account.h"
 # include "certificate.h"
 
-inherit "../RestServer";
+inherit "RestServer";
 private inherit base64 "/lib/util/base64";
 
 

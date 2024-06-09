@@ -27,7 +27,7 @@ register(CHAT_SERVER, "GET", "/v1/backup/auth",
 # include "account.h"
 # include "credentials.h"
 
-inherit "../RestServer";
+inherit "RestServer";
 private inherit uuid "~/lib/uuid";
 
 
