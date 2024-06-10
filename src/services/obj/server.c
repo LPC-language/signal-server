@@ -19,3 +19,4 @@
 # include "services.h"
 
 inherit ChatServices;
+inherit StorageServices;

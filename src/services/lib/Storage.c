@@ -16,10 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# define APPLICATION_NAME	"MsgServer"
-# define APPLICATION_VERSION	"9.60"
+# ifdef REGISTER
 
-# define ChatServices		"/usr/MsgServer/services/lib/Chat"
-# define StorageServices	"/usr/MsgServer/services/lib/Storage"
+/*
+ * register REST API endpoints
+ */
 
-# define RegistrationService	"/usr/MsgServer/services/lib/chat/Registration"
+# include "storage/Storage.c"
+
+# else
+
+inherit "storage/Storage";
+
+# endif

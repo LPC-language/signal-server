@@ -20,7 +20,7 @@ private inherit asn "/lib/util/asn";
 
 
 /*
- * protobuffer-encode an integer
+ * protobuf-encode an integer
  */
 static string protoInt(int value)
 {
@@ -39,7 +39,7 @@ static string protoInt(int value)
 }
 
 /*
- * protobuffer-encode a string
+ * protobuf-encode a string
  */
 static string protoString(string str)
 {
@@ -47,7 +47,7 @@ static string protoString(string str)
 }
 
 /*
- * protobuffer-encode time
+ * protobuf-encode time
  */
 static string protoTime(int time, float mtime)
 {

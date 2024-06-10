@@ -93,4 +93,5 @@ static void create()
 
 # define REGISTER
 # include "~/services/lib/Chat.c"
+# include "~/services/lib/Storage.c"
 }

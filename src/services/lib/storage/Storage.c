@@ -16,10 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# define APPLICATION_NAME	"MsgServer"
-# define APPLICATION_VERSION	"9.60"
+# ifdef REGISTER
 
-# define ChatServices		"/usr/MsgServer/services/lib/Chat"
-# define StorageServices	"/usr/MsgServer/services/lib/Storage"
+register(STORAGE_SERVER, "GET", "/v1/storage/manifest",
+	 "getStorageManifest");
+register(STORAGE_SERVER, "GET", "/v1/storage/manifest/version/{}",
+	 "getStorageManifestVersion");
 
-# define RegistrationService	"/usr/MsgServer/services/lib/chat/Registration"
+# else
+
+# include "~HTTP/HttpResponse.h"
+# include "rest.h"
+
+inherit RestServer;
+
+
+/*
+ * get storage manifest
+ */
+static int getStorageManifest()
+{
+    return respond(HTTP_UNAUTHORIZED, nil, nil);
+}
+
+/*
+ * get storage manifest version
+ */
+static int getStorageManifestVersion(string version)
+{
+    return respond(HTTP_UNAUTHORIZED, nil, nil);
+}
+
+# endif
