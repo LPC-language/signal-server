@@ -18,25 +18,60 @@
 
 # ifdef REGISTER
 
-register(CHAT_SERVER, "GET", "/v1/websocket/", "getWebsocket");
-register(CHAT_SERVER, "GET", "/v1/websocket/{}", "getWebsocketLogin");
+register(CHAT_SERVER, "GET", "/v1/websocket/",
+	 "getWebsocket", argHeader("Upgrade"), argHeader("Connection"),
+	 argHeader("Sec-WebSocket-Key"), argHeader("Sec-WebSocket-Version"));
+register(CHAT_SERVER, "GET", "/v1/websocket/{}",
+	 "getWebsocketLogin", argHeader("Upgrade"), argHeader("Connection"),
+	 argHeader("Sec-WebSocket-Key"), argHeader("Sec-WebSocket-Version"));
 
 # else
 
+# include <String.h>
 # include "~HTTP/HttpResponse.h"
+# include "~HTTP/HttpField.h"
 # include "rest.h"
+# include "account.h"
 
 inherit RestServer;
+private inherit base64 "/lib/util/base64";
+private inherit hex "/lib/util/hex";
+private inherit "~/lib/proto";
 
 
-static int getWebsocket()
+# define GUID	"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+
+static int getWebsocket(string upgrade, string connection, string key,
+			string version)
 {
-    return respond(HTTP_PROXY_AUTHENTICATION_REQUIRED, nil, nil);
+    int code;
+
+    if (upgrade == "websocket" && connection == "Upgrade" && key != nil &&
+	version == "13") {
+	code = respond(HTTP_SWITCHING_PROTOCOLS, nil, nil, ([
+	    "Upgrade" : ({ "websocket" }),
+	    "Connection" : ({ "Upgrade" }),
+	    "Sec-WebSocket-Accept" : base64::encode(hash_string("SHA1",
+								key + GUID))
+	]));
+	upgradeToWebSocket();
+
+	return code;
+    } else {
+	return respond(HTTP_BAD_REQUEST, nil, nil);
+    }
 }
 
-static int getWebsocketLogin(string param)
+static int getWebsocketLogin(string param, string upgrade, string connection,
+			     string key, string version)
 {
-    return respond(HTTP_PROXY_AUTHENTICATION_REQUIRED, nil, nil);
+    string uuid, password;
+
+    if (sscanf(param, "?login=%s&password=%s", uuid, password) != 2) {
+	return respond(HTTP_BAD_REQUEST, nil, nil);
+    }
+
+    return getWebsocket(upgrade, connection, key, version);
 }
 
 # endif

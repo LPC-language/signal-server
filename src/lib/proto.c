@@ -16,11 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+# include <String.h>
+
 private inherit asn "/lib/util/asn";
 
 
+# define ASN64	"\1\0\0\0\0\0\0\0\0"
+
 /*
- * protobuf-encode an integer
+ * protobuf-encode an integer, wireType = 0
  */
 static string protoInt(int value)
 {
@@ -29,7 +33,7 @@ static string protoInt(int value)
     str = "";
     c = ".";
     while (value & -128) {
-	c[0] = 128 | (value & 127);
+	c[0] = 0x80 | (value & 0x7f);
 	value >>= 7;
 	str += c;
     }
@@ -39,7 +43,50 @@ static string protoInt(int value)
 }
 
 /*
- * protobuf-encode a string
+ * protobuf-encode an ASN, wireType = 0
+ */
+static string protoAsn(string value)
+{
+    int len;
+    string str, c;
+
+    if ((len=strlen(value)) > 9 || (len == 9 && value[0] != '\0')) {
+	error("ASN too large");
+    }
+    str = "";
+    c = ".";
+    while (len != 1) {
+	c[0] = 0x80 | (value[len - 1] & 0x7f);
+	str += c;
+	value = asn_rshift(value, 7);
+	len = strlen(value);
+    }
+
+    return str + value;
+}
+
+/*
+ * protobuf-encode a 64 bit entity, wireType = 1
+ */
+static string protoFixed64(string str)
+{
+    return (str + "\0\0\0\0\0\0\0")[.. 7];
+}
+
+/*
+ * protobuf-encode time, wireType = 1
+ */
+static string protoTime(int time, float mtime)
+{
+    string str;
+
+    str = asn::reverse(asn_add(asn_mult(asn::encode(time), "\x03\xe8", ASN64),
+			       asn::encode((int) (mtime * 1000.0)), ASN64));
+    return protoFixed64(str);
+}
+
+/*
+ * protobuf-encode a string, wireType = 2
  */
 static string protoString(string str)
 {
@@ -47,14 +94,197 @@ static string protoString(string str)
 }
 
 /*
- * protobuf-encode time
+ * protobuf-encode a StringBuffer, wireType = 2
  */
-static string protoTime(int time, float mtime)
+static StringBuffer protoStrbuf(StringBuffer str)
+{
+    StringBuffer chunk;
+
+    chunk = new StringBuffer(protoInt(str->length()));
+    chunk->append(str);
+
+    return chunk;
+}
+
+/*
+ * protobuf-encode a 32 bit entity, wireType = 5
+ */
+static string protoFixed32(string str)
+{
+    return (str + "\0\0\0")[.. 3];
+}
+
+/*
+ * parse a byte
+ */
+static mixed *parseByte(StringBuffer chunk, string buf, int offset)
+{
+    if (!buf || offset >= strlen(buf)) {
+	buf = chunk->chunk();
+	offset = 0;
+    }
+
+    return ({ buf[offset], buf, offset + 1 });
+}
+
+/*
+ * parse an integer
+ */
+static mixed *parseInt(StringBuffer chunk, string buf, int offset)
+{
+    int c, value, shift;
+
+    if (!buf) {
+	buf = chunk->chunk();
+	offset = 0;
+    }
+
+    value = shift = 0;
+    do {
+	if (offset >= strlen(buf)) {
+	    buf = chunk->chunk();
+	    offset = 0;
+	}
+	c = buf[offset++];
+	value |= (c & 0x7f) << shift;
+	shift += 7;
+    } while (c & 0x80);
+
+    return ({ value, buf, offset });
+}
+
+/*
+ * parse an ASN
+ */
+static mixed *parseAsn(StringBuffer chunk, string buf, int offset)
+{
+    int c, shift;
+    string value, b;
+
+    if (!buf) {
+	buf = chunk->chunk();
+	offset = 0;
+    }
+
+    value = "\0";
+    b = ".";
+    shift = 0;
+    do {
+	if (offset >= strlen(buf)) {
+	    buf = chunk->chunk();
+	    offset = 0;
+	}
+	c = buf[offset++];
+	b[0] = c & 0x7f;
+	value = asn_add(value, asn_lshift(b, shift, ASN64), ASN64);
+	shift += 7;
+    } while (c & 0x80);
+
+    return ({ value, buf, offset });
+}
+
+/*
+ * parse a 64 bit entity
+ */
+static mixed *parseFixed64(StringBuffer chunk, string buf, int offset)
+{
+    int len;
+    string str;
+
+    if (!buf) {
+	buf = chunk->chunk();
+	offset = 0;
+    }
+
+    str = "";
+    for (len = 8; len > strlen(buf) - offset; ) {
+	len -= strlen(buf) - offset;
+	str += buf[offset ..];
+	buf = chunk->chunk();
+	offset = 0;
+    }
+
+    return ({ str + buf[offset .. offset + len - 1], buf, offset + len });
+}
+
+/*
+ * parse time
+ */
+static mixed *parseTime(StringBuffer chunk, string buf, int offset)
 {
     string str;
 
-    str = "\1\0\0\0\0\0\0\0\0";
-    str = asn::reverse(asn_add(asn_mult(asn::encode(time), "\x03\xe8", str),
-			       asn::encode((int) (mtime * 1000.0)), str));
-    return (str + "\0\0\0\0\0\0\0")[.. 7];
+    ({ str, buf, offset }) = parseFixed64(chunk, buf, offset);
+    str = asn::reverse(str);
+    return ({
+	asn::decode(asn_div(str, "\x03\xe8", ASN64)),
+	(float) asn::decode(asn_mod(str, "\x03\xe8")) / 1000.0,
+	buf,
+	offset
+    });
+}
+
+/*
+ * parse a string
+ */
+static mixed *parseString(StringBuffer chunk, string buf, int offset)
+{
+    int len;
+    string str;
+
+    ({ len, buf, offset }) = parseInt(chunk, buf, offset);
+    str = "";
+    while (len > strlen(buf) - offset) {
+	len -= strlen(buf) - offset;
+	str += buf[offset ..];
+	buf = chunk->chunk();
+	offset = 0;
+    }
+
+    return ({ str + buf[offset .. offset + len - 1], buf, offset + len });
+}
+
+/*
+ * parse a StringBuffer
+ */
+static mixed *parseStrbuf(StringBuffer chunk, string buf, int offset)
+{
+    int len;
+    StringBuffer str;
+
+    ({ len, buf, offset }) = parseInt(chunk, buf, offset);
+    str = new StringBuffer;
+    while (len > strlen(buf) - offset) {
+	len -= strlen(buf) - offset;
+	str->append(buf[offset ..]);
+	buf = chunk->chunk();
+	offset = 0;
+    }
+
+    str->append(buf[offset .. offset + len - 1]);
+    return ({ str, buf, offset + len });
+}
+
+/*
+ * parse a 32 bit entity
+ */
+static mixed *parseFixed32(StringBuffer chunk, string buf, int offset)
+{
+    int len;
+    string str;
+
+    if (!buf) {
+	buf = chunk->chunk();
+	offset = 0;
+    }
+
+    str = "";
+    for (len = 4; len > strlen(buf) - offset; ) {
+	len -= strlen(buf) - offset;
+	str += buf[offset ..];
+	buf = chunk->chunk();
+	offset = 0;
+    }
+
+    return ({ str + buf[offset .. offset + len - 1], buf, offset + len });
 }

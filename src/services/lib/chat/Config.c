@@ -24,9 +24,10 @@ register(CHAT_SERVER, "GET", "/v1/config",
 # else
 
 # include "~HTTP/HttpResponse.h"
+# include "rest.h"
 # include "account.h"
 
-inherit "RestServer";
+inherit RestServer;
 
 
 /*

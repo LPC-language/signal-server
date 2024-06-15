@@ -24,10 +24,11 @@ register(CHAT_SERVER, "GET", "/v1/storage/auth",
 # else
 
 # include "~HTTP/HttpResponse.h"
+# include "rest.h"
 # include "account.h"
 # include "credentials.h"
 
-inherit "RestServer";
+inherit RestServer;
 private inherit uuid "~/lib/uuid";
 
 

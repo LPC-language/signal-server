@@ -26,9 +26,10 @@ register(CHAT_SERVER, "PUT", "/v1/accounts/attributes/",
 
 # else
 
+# include "rest.h"
 # include "account.h"
 
-inherit "RestServer";
+inherit RestServer;
 
 
 /*

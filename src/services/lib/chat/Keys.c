@@ -26,9 +26,10 @@ register(CHAT_SERVER, "PUT", "/v2/keys/?identity=pni",
 # else
 
 # include <Continuation.h>
+# include "rest.h"
 # include "account.h"
 
-inherit "RestServer";
+inherit RestServer;
 
 
 /*

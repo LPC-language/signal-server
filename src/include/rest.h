@@ -25,10 +25,12 @@
 # define ARG_ENTITY		1
 # define ARG_ENTITY_JSON	2
 # define ARG_HEADER_AUTH	3
+# define ARG_HEADER_OPT_AUTH	4
 
 # define argEntity()		ARG_ENTITY
 # define argEntityJson()	ARG_ENTITY_JSON
 # define argHeaderAuth()	ARG_HEADER_AUTH
+# define argHeaderOptAuth()	ARG_HEADER_OPT_AUTH
 # define argHeader(header)	(header)
 
 # define REST_LENGTH_LIMIT	4194304
