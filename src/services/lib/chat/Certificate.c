@@ -35,14 +35,16 @@ private inherit base64 "/lib/util/base64";
 /*
  * get SenderCertificate
  */
-static void getCertificateDelivery(Account account, Device device)
+static void getCertificateDelivery(string context, Account account,
+				   Device device)
 {
-    call_out("getCertificateDelivery2", 0, account, device->id());
+    call_out("getCertificateDelivery2", 0, context, account, device->id());
 }
 
-static void getCertificateDelivery2(Account account, int deviceId)
+static void getCertificateDelivery2(string context, Account account,
+				    int deviceId)
 {
-    respondJson(HTTP_OK, ([
+    respondJson(context, HTTP_OK, ([
 	"certificate" :
 	base64::encode(CERT_SERVER->generate(account, deviceId,
 					     account->phoneNumber()))

@@ -56,7 +56,8 @@ private inherit uuid "~/lib/uuid";
 /*
  * verification response
  */
-private int respondVerification(mapping session, varargs int code)
+private int respondVerification(string context, mapping session,
+				varargs int code)
 {
     mapping entity;
 
@@ -71,13 +72,13 @@ private int respondVerification(mapping session, varargs int code)
 	entity["nextVerificationAttempt"] = 0;
     }
 
-    return respondJson((code) ? code : HTTP_OK, entity);
+    return respondJson(context, (code) ? code : HTTP_OK, entity);
 }
 
 /*
  * start a new verification session
  */
-static int postVerificationNewSession(mapping entity)
+static int postVerificationNewSession(string context, mapping entity)
 {
     string sessionId, pushToken, challenge;
     mapping session;
@@ -87,29 +88,31 @@ static int postVerificationNewSession(mapping entity)
 	session
     }) = REGISTRATION_SERVER->getSessionId(entity["number"]);
     if (session["verified"]) {
-	return respondVerification(session);
+	return respondVerification(context, session);
     }
 
     pushToken = entity["pushToken"];
     if (!pushToken || entity["pushTokenType"] != "fcm") {
-	return respondVerification(session, HTTP_UNPROCESSABLE_CONTENT);
+	return respondVerification(context, session,
+				   HTTP_UNPROCESSABLE_CONTENT);
     }
     session["pushToken"] = pushToken;
     if (!session["challenge"]) {
 	challenge = hex::format(random_string(16));
 	FCM_RELAY->sendChallenge(pushToken, challenge,
-				 new Continuation("fcmChallengeSent", sessionId,
-						  challenge));
+				 new Continuation("fcmChallengeSent", context,
+						  sessionId, challenge));
 	return 0;
     }
 
-    return respondVerification(session);
+    return respondVerification(context, session);
 }
 
 /*
  * respond after a FCM challenge was sent
  */
-static void fcmChallengeSent(string sessionId, string challenge, int code)
+static void fcmChallengeSent(string context, string sessionId, string challenge,
+			     int code)
 {
     mapping session;
 
@@ -117,20 +120,21 @@ static void fcmChallengeSent(string sessionId, string challenge, int code)
     if (code == HTTP_OK) {
 	session["challenge"] = challenge;
     }
-    respondVerification(session, code);
+    respondVerification(context, session, code);
 }
 
 /*
  * receive FCM challenge response
  */
-static int patchVerificationSession(string sessionId, mapping entity)
+static int patchVerificationSession(string context, string sessionId,
+				    mapping entity)
 {
     mapping session;
     string challenge;
 
     session = REGISTRATION_SERVER->getSession(sessionId);
     if (!session) {
-	return respond(HTTP_NOT_FOUND, nil, nil);
+	return respond(context, HTTP_NOT_FOUND, nil, nil);
     }
 
     challenge = entity["pushChallenge"];
@@ -138,54 +142,56 @@ static int patchVerificationSession(string sessionId, mapping entity)
 	session["challenge"] = nil;
 	session["acceptCode"] = TRUE;
     }
-    return respondVerification(session);
+    return respondVerification(context, session);
 }
 
 /*
  * return current verification status
  */
-static int getVerificationSession(string sessionId)
+static int getVerificationSession(string context, string sessionId)
 {
     mapping session;
 
     session = REGISTRATION_SERVER->getSession(sessionId);
     if (!session) {
-	return respond(HTTP_NOT_FOUND, nil, nil);
+	return respond(context, HTTP_NOT_FOUND, nil, nil);
     }
 
-    return respondVerification(REGISTRATION_SERVER->getSession(sessionId));
+    return respondVerification(context,
+			       REGISTRATION_SERVER->getSession(sessionId));
 }
 
 /*
  * receive request to send SMS code
  */
-static int postVerificationSessionCode(string sessionId, string acceptLanguage,
-				       mapping entity)
+static int postVerificationSessionCode(string context, string sessionId,
+				       string acceptLanguage, mapping entity)
 {
     mapping session;
 
     session = REGISTRATION_SERVER->getSession(sessionId);
     if (!session) {
-	return respond(HTTP_NOT_FOUND, nil, nil);
+	return respond(context, HTTP_NOT_FOUND, nil, nil);
     }
 
     /*
      * XXX don't actually send any code
      */
     session["nextCode"] = TRUE;
-    return respondVerification(session);
+    return respondVerification(context, session);
 }
 
 /*
  * receive SMS code response
  */
-static int putVerificationSessionCode(string sessionId, mapping entity)
+static int putVerificationSessionCode(string context, string sessionId,
+				      mapping entity)
 {
     mapping session;
 
     session = REGISTRATION_SERVER->getSession(sessionId);
     if (!session) {
-	return respond(HTTP_NOT_FOUND, nil, nil);
+	return respond(context, HTTP_NOT_FOUND, nil, nil);
     }
 
     /*
@@ -194,19 +200,19 @@ static int putVerificationSessionCode(string sessionId, mapping entity)
     session["acceptCode"] = nil;
     session["nextCode"] = nil;
     session["verified"] = TRUE;
-    return respondVerification(session);
+    return respondVerification(context, session);
 }
 
 /*
  * register an account
  */
-static int postRegistration(HttpAuthentication authorization, string agent,
-			    mapping entity)
+static int postRegistration(string context, HttpAuthentication authorization,
+			    string agent, mapping entity)
 {
     string phoneNumber, password;
 
     if (!authorization || lower_case(authorization->scheme()) != "basic") {
-	return respond(HTTP_BAD_REQUEST, nil, nil);
+	return respond(context, HTTP_BAD_REQUEST, nil, nil);
     }
     sscanf(base64::decode(authorization->authentication()), "%s:%s",
 	   phoneNumber, password);
@@ -216,7 +222,7 @@ static int postRegistration(HttpAuthentication authorization, string agent,
     new Continuation("postRegistration2", phoneNumber, password, agent,
 		     entity["accountAttributes"])
 	->chain("postRegistration3")
-	->chain("postRegistration4")
+	->chain("postRegistration4", context)
 	->runNext();
 }
 
@@ -261,9 +267,9 @@ static Account postRegistration3(Account account)
 /*
  * register an account, part 4
  */
-static void postRegistration4(Account account)
+static void postRegistration4(string context, Account account)
 {
-    respondJson(HTTP_OK, ([
+    respondJson(context, HTTP_OK, ([
 	"uuid" : uuid::encode(account->id()),
 	"number" : account->phoneNumber(),
 	"pni" : uuid::encode(account->pni()),

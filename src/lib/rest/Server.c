@@ -32,7 +32,6 @@
 
 private inherit "/lib/util/ascii";
 private inherit base64 "/lib/util/base64";
-private inherit hex "/lib/util/hex";
 private inherit json "/lib/util/json";
 private inherit uuid "~/lib/uuid";
 private inherit "~/lib/proto";
@@ -41,9 +40,9 @@ private inherit "~/lib/proto";
 private object connection;	/* TLS connection */
 private HttpRequest request;	/* most recent request */
 private mixed *handle;		/* call handle */
+private string login, password;	/* websocket authentication */
 private int websocket;		/* WebSocket protocol enabled? */
 private int opcode, flags;	/* opcode and flags of last WebSocket frame */
-private string id;
 
 /*
  * establish connection
@@ -157,14 +156,15 @@ private void httpRespond(int code, string type, StringBuffer entity,
 /*
  * send a websocket response
  */
-private void wsRespond(int code, StringBuffer entity, mapping extraHeaders)
+private void wsRespond(string context, int code, StringBuffer entity,
+		       mapping extraHeaders)
 {
     StringBuffer response, chunk;
     string *indices;
     mixed *values;
     int sz, i;
 
-    response = new StringBuffer("\10" + protoAsn(id) +
+    response = new StringBuffer("\10" + protoAsn(context) +
 				"\20" + protoInt(code) +
 				"\32" + protoString(comment(code)));
     if (entity) {
@@ -191,11 +191,13 @@ private void wsRespond(int code, StringBuffer entity, mapping extraHeaders)
 /*
  * send a response
  */
-static int respond(int code, string type, StringBuffer entity,
+static int respond(string context, int code, string type, StringBuffer entity,
 		   varargs mapping extraHeaders)
 {
+    request = nil;
+    handle = nil;
     if (websocket) {
-	wsRespond(code, entity, extraHeaders);
+	wsRespond(context, code, entity, extraHeaders);
     } else {
 	httpRespond(code, type, entity, extraHeaders);
     }
@@ -206,25 +208,26 @@ static int respond(int code, string type, StringBuffer entity,
 /*
  * respond with JSON body
  */
-static int respondJson(int code, mapping entity, varargs mapping extraHeaders)
+static int respondJson(string context, int code, mapping entity,
+		       varargs mapping extraHeaders)
 {
-    return respond(code, "application/json;charset=utf-8",
+    return respond(context, code, "application/json;charset=utf-8",
 		   new StringBuffer(json::encode(entity)), extraHeaders);
 }
 
 /*
  * respond OK with empty JSON body
  */
-static int respondJsonOK(varargs mapping extraHeaders)
+static int respondJsonOK(string context, varargs mapping extraHeaders)
 {
-    return respondJson(HTTP_OK, ([ ]), extraHeaders);
+    return respondJson(context, HTTP_OK, ([ ]), extraHeaders);
 }
 
 /*
  * substitute argument
  */
-static mixed substArg(HttpRequest request, StringBuffer entity, mixed *args,
-		      int i, mixed *handle)
+static mixed substArg(string context, HttpRequest request, StringBuffer entity,
+		      mixed *args, int i, mixed *handle)
 {
     mixed arg;
     HttpAuthentication auth;
@@ -239,27 +242,34 @@ static mixed substArg(HttpRequest request, StringBuffer entity, mixed *args,
 	    error("Authorization must be first");
 	}
 
-	catch {
+	try {
 	    auth = request->headerValue("Authorization");
 	    if (!auth) {
-		if (arg == ARG_HEADER_OPT_AUTH) {
-		    return call_other(this_object(), handle[0],
-				      (handle[1] + ({ nil, nil }) +
-				       args[1 ..])...);
+		if (login) {
+		    str = login;
+		    password = ::password;
+		} else if (arg == ARG_HEADER_OPT_AUTH) {
+		    call_out(handle[0], 0, context,
+			     (handle[1] + ({ nil, nil }) + args[1 ..])...);
+		    return 0;
+		} else {
+		    return respond(context, HTTP_BAD_REQUEST, nil, nil);
 		}
-	    } else if (lower_case(auth->scheme()) == "basic" &&
+	    } else if (lower_case(auth->scheme()) != "basic" ||
 		       sscanf(base64::decode(auth->authentication()), "%s:%s",
-			      str, password) == 2) {
-		deviceId = 1;
-		sscanf(str, "%s.%d", str, deviceId);
-		str = uuid::decode(str);
-		call_out("authCall", 0, str, deviceId, password, args[1 ..],
-			 handle);
-		return 0;
+			      str, password) != 2) {
+		return respond(context, HTTP_BAD_REQUEST, nil, nil);
 	    }
-	}
 
-	return respond(HTTP_BAD_REQUEST, nil, nil);
+	    deviceId = 1;
+	    sscanf(str, "%s.%d", str, deviceId);
+	    str = uuid::decode(str);
+	    call_out("authCall", 0, context, str, deviceId, password,
+		     args[1 ..], handle);
+	    return 0;
+	} catch (...) {
+	    return respond(context, HTTP_BAD_REQUEST, nil, nil);
+	}
 
     case ARG_ENTITY:
 	return entity;
@@ -272,7 +282,7 @@ static mixed substArg(HttpRequest request, StringBuffer entity, mixed *args,
 	    }
 	    return json::decode(entity->chunk());
 	} catch (...) {
-	    return respond(HTTP_BAD_REQUEST, nil, nil);
+	    return respond(context, HTTP_BAD_REQUEST, nil, nil);
 	}
 	break;
 
@@ -291,14 +301,15 @@ static mixed substArg(HttpRequest request, StringBuffer entity, mixed *args,
 /*
  * handle a REST call
  */
-private int call(StringBuffer entity)
+private int call(string context, HttpRequest request, StringBuffer entity,
+		 mixed *handle)
 {
     mixed *args, arg;
     int i;
 
     args = handle[2 ..];
     for (i = sizeof(args); --i >= 0; ) {
-	arg = substArg(request, entity, args, i, handle);
+	arg = substArg(context, request, entity, args, i, handle);
 	switch (typeof(arg)) {
 	case T_INT:
 	    return arg;
@@ -313,14 +324,14 @@ private int call(StringBuffer entity)
 	}
     }
 
-    return call_other(this_object(), handle[0], (handle[1] + args)...);
+    return call_other(this_object(), handle[0], context, (handle[1] + args)...);
 }
 
 /*
  * authenticated call
  */
-static void authCall(string accountId, int deviceId, string password,
-		     mixed *args, mixed *handle)
+static void authCall(string context, string accountId, int deviceId,
+		     string password, mixed *args, mixed *handle)
 {
     Account account;
     Device device;
@@ -329,13 +340,13 @@ static void authCall(string accountId, int deviceId, string password,
     if (account) {
 	device = account->device(deviceId);
 	if (device && device->verifyPassword(password)) {
-	    call_other(this_object(), handle[0],
+	    call_other(this_object(), handle[0], context,
 		       (handle[1] + ({ account, device }) + args)...);
 	    return;
 	}
     }
 
-    respond(HTTP_UNAUTHORIZED, nil, nil);
+    respond(context, HTTP_UNAUTHORIZED, nil, nil);
 }
 
 /*
@@ -350,49 +361,49 @@ int receiveRequest(int code, HttpRequest request)
 	::request = request;
 
 	if (code != 0) {
-	    return respond(code, nil, nil);
+	    return respond(nil, code, nil, nil);
 	}
 
 	host = request->host();
 	if (!host) {
-	    return respond(HTTP_BAD_REQUEST, nil, nil);
+	    return respond(nil, HTTP_BAD_REQUEST, nil, nil);
 	}
 	str = previous_object()->host();
 	if (str && lower_case(str) != lower_case(host)) {
-	    return respond(HTTP_BAD_REQUEST, nil, nil);
+	    return respond(nil, HTTP_BAD_REQUEST, nil, nil);
 	}
 
 	str = request->scheme();
 	if (str && str != "https://") {
-	    return respond(HTTP_NOT_FOUND, nil, nil);
+	    return respond(nil, HTTP_NOT_FOUND, nil, nil);
 	}
 
 	if (request->headerValue("Transfer-Encoding")) {
-	    return respond(HTTP_CONTENT_TOO_LARGE, nil, nil);
+	    return respond(nil, HTTP_CONTENT_TOO_LARGE, nil, nil);
 	}
 
 	handle = REST_API->lookup(host, request->method(), request->path());
 	if (!handle) {
-	    return respond(HTTP_NOT_FOUND, nil, nil);
+	    return respond(nil, HTTP_NOT_FOUND, nil, nil);
 	}
 
 	length = request->headerValue("Content-Length");
 	switch (typeof(length)) {
 	case T_NIL:
-	    return call(nil);
+	    return call(nil, request, nil, handle);
 
 	case T_INT:
 	    if (length > REST_LENGTH_LIMIT) {
-		return respond(HTTP_CONTENT_TOO_LARGE, nil, nil);
+		return respond(nil, HTTP_CONTENT_TOO_LARGE, nil, nil);
 	    }
 	    if (sizeof(handle & ({ ARG_ENTITY_JSON })) != 0 && length > 65535) {
-		return respond(HTTP_CONTENT_TOO_LARGE, nil, nil);
+		return respond(nil, HTTP_CONTENT_TOO_LARGE, nil, nil);
 	    }
 	    connection->expectEntity(length);
 	    break;
 
 	default:
-	    return respond(HTTP_BAD_REQUEST, nil, nil);
+	    return respond(nil, HTTP_BAD_REQUEST, nil, nil);
 	}
     }
 }
@@ -403,15 +414,17 @@ int receiveRequest(int code, HttpRequest request)
 void receiveEntity(StringBuffer entity)
 {
     if (previous_object() == connection) {
-	call(entity);
+	call(nil, request, entity, handle);
     }
 }
 
 /*
  * upgrade connection to WebSocket protocol
  */
-static void upgradeToWebSocket()
+static void upgradeToWebSocket(varargs string login, string password)
 {
+    ::login = login;
+    ::password = password;
     websocket = TRUE;
 }
 
@@ -432,8 +445,10 @@ void receiveWsFrame(int opcode, int flags, int len)
 private void receiveWsRequest(StringBuffer chunk)
 {
     int c, offset;
-    string buf, verb, path, headers, header;
+    string buf, verb, path, context, headers, header;
     StringBuffer body;
+    HttpRequest request;
+    mixed *handle;
 
     ({ c, buf, offset }) = parseByte(chunk, nil, 0);
     if (c != 012) {
@@ -453,7 +468,7 @@ private void receiveWsRequest(StringBuffer chunk)
     if (c != 040) {
 	error("WebSocketRequestMessage.id expected");
     }
-    ({ id, buf, offset }) = parseAsn(chunk, buf, offset);
+    ({ context, buf, offset }) = parseAsn(chunk, buf, offset);
 
     for (headers = ""; offset < strlen(buf) || chunk->length() != 0;
 	 headers += header + "\n") {
@@ -471,9 +486,9 @@ private void receiveWsRequest(StringBuffer chunk)
 
     handle = REST_API->lookup(CHAT_SERVER, request->method(), request->path());
     if (!handle) {
-	respond(HTTP_NOT_FOUND, nil, nil);
+	respond(context, HTTP_NOT_FOUND, nil, nil);
     } else {
-	call(body);
+	call(context, request, body, handle);
     }
 }
 

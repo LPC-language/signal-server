@@ -35,12 +35,12 @@ private inherit uuid "~/lib/uuid";
 /*
  * backup credentials
  */
-static void getBackupAuth(Account account, Device device)
+static void getBackupAuth(string context, Account account, Device device)
 {
-    call_out("getBackupAuth2", 0, account->id());
+    call_out("getBackupAuth2", 0, context, account->id());
 }
 
-static void getBackupAuth2(string id)
+static void getBackupAuth2(string context, string id)
 {
     string username, password;
 
@@ -48,7 +48,9 @@ static void getBackupAuth2(string id)
 	username,
 	password
     }) = CREDENTIALS_SERVER->generate(uuid::encode(id), FALSE, TRUE, TRUE);
-    respondJson(HTTP_OK, ([ "username" : username, "password" : password ]));
+    respondJson(context, HTTP_OK, ([
+	"username" : username, "password" : password
+    ]));
 }
 
 # endif

@@ -34,17 +34,17 @@ inherit RestServer;
 /*
  * get storage manifest
  */
-static int getStorageManifest()
+static int getStorageManifest(string context)
 {
-    return respond(HTTP_UNAUTHORIZED, nil, nil);
+    return respond(context, HTTP_UNAUTHORIZED, nil, nil);
 }
 
 /*
  * get storage manifest version
  */
-static int getStorageManifestVersion(string version)
+static int getStorageManifestVersion(string context, string version)
 {
-    return respond(HTTP_UNAUTHORIZED, nil, nil);
+    return respond(context, HTTP_UNAUTHORIZED, nil, nil);
 }
 
 # endif

@@ -35,7 +35,8 @@ inherit RestServer;
 /*
  * add keys to the server
  */
-static void putKeysAci(Account account, Device device, mapping entity)
+static void putKeysAci(string context, Account account, Device device,
+		       mapping entity)
 {
     mapping signedPreKey;
 
@@ -45,7 +46,7 @@ static void putKeysAci(Account account, Device device, mapping entity)
 			       signedPreKey["signature"]);
 
     new Continuation("putKeys2", account->id(), device->id(), entity["preKeys"])
-	->add("respondJsonOK")
+	->add("respondJsonOK", context)
 	->runNext();
 }
 
@@ -60,7 +61,8 @@ static void putKeys2(string id, int deviceId, mapping *preKeys)
 /*
  * add keys to the server
  */
-static void putKeysPni(Account account, Device device, mapping entity)
+static void putKeysPni(string context, Account account, Device device,
+		       mapping entity)
 {
     mapping signedPreKey;
 
@@ -72,7 +74,7 @@ static void putKeysPni(Account account, Device device, mapping entity)
 
     new Continuation("putKeys2", account->pni(), device->id(),
 		     entity["preKeys"])
-	->add("respondJsonOK")
+	->add("respondJsonOK", context)
 	->runNext();
 }
 

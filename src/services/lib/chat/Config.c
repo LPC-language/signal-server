@@ -33,14 +33,9 @@ inherit RestServer;
 /*
  * default configuration
  */
-static void getConfig(Account account, Device device)
+static int getConfig(string context, Account account, Device device)
 {
-    call_out("getConfig2", 0);
-}
-
-static void getConfig2()
-{
-    respondJson(HTTP_OK, ([ "config" : ({ }) ]));
+    return respondJson(context, HTTP_OK, ([ "config" : ({ }) ]));
 }
 
 # endif

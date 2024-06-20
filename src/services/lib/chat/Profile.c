@@ -29,17 +29,18 @@ register(CHAT_SERVER, "PUT", "/v1/profile/",
 # include "account.h"
 
 inherit RestServer;
-inherit base64 "/lib/util/base64";
+private inherit base64 "/lib/util/base64";
 
 
 /*
  * upload profile
  */
-static void putProfile(Account account, Device device, mapping entity)
+static void putProfile(string context, Account account, Device device,
+		       mapping entity)
 {
     /* XXX ignore badges */
     new Continuation("putProfile2", account->id(), entity)
-	->add("respondJsonOK")
+	->add("respondJsonOK", context)
 	->runNext();
 }
 

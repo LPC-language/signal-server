@@ -35,20 +35,18 @@ register(CHAT_SERVER, "GET", "/v1/websocket/{}",
 
 inherit RestServer;
 private inherit base64 "/lib/util/base64";
-private inherit hex "/lib/util/hex";
-private inherit "~/lib/proto";
 
 
 # define GUID	"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-static int getWebsocket(string upgrade, string connection, string key,
-			string version)
+static int getWebsocket(string context, string upgrade, string connection,
+			string key, string version)
 {
     int code;
 
     if (upgrade == "websocket" && connection == "Upgrade" && key != nil &&
 	version == "13") {
-	code = respond(HTTP_SWITCHING_PROTOCOLS, nil, nil, ([
+	code = respond(context, HTTP_SWITCHING_PROTOCOLS, nil, nil, ([
 	    "Upgrade" : ({ "websocket" }),
 	    "Connection" : ({ "Upgrade" }),
 	    "Sec-WebSocket-Accept" : base64::encode(hash_string("SHA1",
@@ -58,20 +56,34 @@ static int getWebsocket(string upgrade, string connection, string key,
 
 	return code;
     } else {
-	return respond(HTTP_BAD_REQUEST, nil, nil);
+	return respond(context, HTTP_BAD_REQUEST, nil, nil);
     }
 }
 
-static int getWebsocketLogin(string param, string upgrade, string connection,
-			     string key, string version)
+static int getWebsocketLogin(string context, string param, string upgrade,
+			     string connection, string key, string version)
 {
-    string uuid, password;
+    string login, password;
+    int code;
 
-    if (sscanf(param, "?login=%s&password=%s", uuid, password) != 2) {
-	return respond(HTTP_BAD_REQUEST, nil, nil);
+    if (sscanf(param, "?login=%s&password=%s", login, password) != 2) {
+	return respond(context, HTTP_BAD_REQUEST, nil, nil);
     }
 
-    return getWebsocket(upgrade, connection, key, version);
+    if (upgrade == "websocket" && connection == "Upgrade" && key != nil &&
+	version == "13") {
+	code = respond(context, HTTP_SWITCHING_PROTOCOLS, nil, nil, ([
+	    "Upgrade" : ({ "websocket" }),
+	    "Connection" : ({ "Upgrade" }),
+	    "Sec-WebSocket-Accept" : base64::encode(hash_string("SHA1",
+								key + GUID))
+	]));
+	upgradeToWebSocket(login, password);
+
+	return code;
+    } else {
+	return respond(context, HTTP_BAD_REQUEST, nil, nil);
+    }
 }
 
 # endif

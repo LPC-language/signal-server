@@ -35,7 +35,8 @@ inherit RestServer;
 /*
  * set gcmId for device
  */
-static void putAccountsGcm(Account account, Device device, mapping entity)
+static void putAccountsGcm(string context, Account account, Device device,
+			   mapping entity)
 {
     string gcmId;
 
@@ -45,11 +46,11 @@ static void putAccountsGcm(Account account, Device device, mapping entity)
 	device->setFetchesMessages(FALSE);
     }
 
-    call_out("respondJsonOK", 0);
+    call_out("respondJsonOK", 0, context);
 }
 
-static void putAccountsAttributes(Account account, Device device, string agent,
-				  mapping entity)
+static void putAccountsAttributes(string context, Account account,
+				  Device device, string agent, mapping entity)
 {
     mapping cap;
 
@@ -66,7 +67,7 @@ static void putAccountsAttributes(Account account, Device device, string agent,
 		    entity["unrestrictedUnidentifiedAccess"], entity["video"],
 		    entity["voice"]);
 
-    call_out("respondJsonOK", 0);
+    call_out("respondJsonOK", 0, context);
 }
 
 # endif

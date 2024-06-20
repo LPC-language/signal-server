@@ -35,12 +35,12 @@ private inherit uuid "~/lib/uuid";
 /*
  * storage credentials
  */
-static void getStorageAuth(Account account, Device device)
+static void getStorageAuth(string context, Account account, Device device)
 {
-    call_out("getStorageAuth2", 0, account->id());
+    call_out("getStorageAuth2", 0, context, account->id());
 }
 
-static void getStorageAuth2(string id)
+static void getStorageAuth2(string context, string id)
 {
     string username, password;
 
@@ -48,7 +48,9 @@ static void getStorageAuth2(string id)
 	username,
 	password
     }) = CREDENTIALS_SERVER->generate(uuid::encode(id), FALSE, TRUE, TRUE);
-    respondJson(HTTP_OK, ([ "username" : username, "password" : password ]));
+    respondJson(context, HTTP_OK, ([
+	"username" : username, "password" : password
+    ]));
 }
 
 # endif
