@@ -28,6 +28,10 @@ static void create()
     compile_object("lib/Profile");
     compile_object("lib/ShoHmacSha256");
     compile_object("lib/ShoSha256");
+    compile_object("lib/zkp/Scalar");
+    compile_object("lib/zkp/RistrettoPoint");
+    compile_object("lib/zkp/RemoteProof");
+    compile_object("lib/zkp/Statement");
     compile_object("obj/oneshot");
     compile_object("obj/fcm_sender");
     compile_object("obj/kvnode_exp");
