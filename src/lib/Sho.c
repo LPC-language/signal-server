@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+# include "zkp.h"
+
 private inherit asn "/lib/util/asn";
 
 
@@ -92,4 +94,32 @@ static void create(string label)
 object clone()
 {
     return copy_object();
+}
+
+/*
+ * squeeze a scalar from the sho
+ */
+Scalar getScalar()
+{
+    return new Scalar(squeeze(64));
+}
+
+/*
+ * squeeze a point from the sho
+ */
+RistrettoPoint getPoint()
+{
+    string bytes;
+
+    bytes = squeeze(64);
+    return new RistrettoPoint(ristretto255_add(ristretto255_map(bytes[.. 31]),
+					       ristretto255_map(bytes[32 ..])));
+}
+
+/*
+ * squeeze a point from the sho, simplified
+ */
+RistrettoPoint getPointSingleElligator()
+{
+    return new RistrettoPoint(ristretto255_map(squeeze(32)));
 }

@@ -16,6 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+# include "Sho.h"
+# include "zkp.h"
+# include "params.h"
+
 private inherit hex "/lib/util/hex";
 
 
@@ -48,4 +52,26 @@ static string decode(string uuid)
 	   hex::decodeString(uuid[14 .. 17]) +
 	   hex::decodeString(uuid[19 .. 22]) +
 	   hex::decodeString(uuid[24 ..]);
+}
+
+/*
+ * calculate M1, M2 from UUID
+ */
+static RistrettoPoint *points(string uuid)
+{
+    Sho sho;
+    RistrettoPoint M1, M2;
+    string bytes;
+
+    sho = PARAMS->uuidSho();
+    sho->absorb(uuid);
+    sho->ratchet();
+    M1 = sho->getPoint();
+    bytes = hash_string("SHA256", uuid);
+    bytes = bytes[.. 7] + uuid + bytes[24 .. 31];
+    bytes[0] &= 0xfe;
+    bytes[31] &= 0x3f;
+    M2 = new RistrettoPoint(ristretto255_map(bytes));
+
+    return ({ M1, M2 });
 }

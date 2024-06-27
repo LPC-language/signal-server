@@ -32,6 +32,8 @@ static void create()
     compile_object("lib/zkp/RistrettoPoint");
     compile_object("lib/zkp/RemoteProof");
     compile_object("lib/zkp/Statement");
+    compile_object("lib/protocol/RemoteProfileKeyCommitment");
+    compile_object("lib/protocol/RemoteProfileKeyCredentialRequest");
     compile_object("obj/oneshot");
     compile_object("obj/fcm_sender");
     compile_object("obj/kvnode_exp");
@@ -45,5 +47,6 @@ static void create()
     compile_object("sys/pni");
     compile_object("sys/keys");
     compile_object("sys/profiles");
+    compile_object("sys/params");
     compile_object("services/obj/server");
 }
