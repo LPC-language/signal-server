@@ -30,55 +30,11 @@ static void create(string bytes)
 }
 
 /*
- * add another ristretto point
- */
-RistrettoPoint add(RistrettoPoint point)
-{
-    bytes = ristretto255_add(bytes, point->bytes());
-    return this_object();
-}
-
-/*
- * subtract another ristretto point
- */
-RistrettoPoint sub(RistrettoPoint point)
-{
-    bytes = ristretto255_sub(bytes, point->bytes());
-    return this_object();
-}
-
-/*
- * negate
- */
-RistrettoPoint neg()
-{
-    bytes = ristretto255_neg(bytes);
-    return this_object();
-}
-
-/*
- * multiply with a scalar
- */
-RistrettoPoint mult(Scalar scalar)
-{
-    bytes = ristretto255_mult(bytes, scalar->bytes());
-    return this_object();
-}
-
-/*
- * equal to another point?
- */
-int equals(RistrettoPoint point)
-{
-    return (bytes == point->bytes());
-}
-
-/*
  * point + point
  */
 static RistrettoPoint operator+ (RistrettoPoint point)
 {
-    return copy_object()->add(point);
+    return new RistrettoPoint(ristretto255_add(bytes, point->bytes()));
 }
 
 /*
@@ -88,9 +44,9 @@ static RistrettoPoint operator+ (RistrettoPoint point)
 static RistrettoPoint operator- (varargs RistrettoPoint point)
 {
     if (point) {
-	return copy_object()->sub(point);
+	return new RistrettoPoint(ristretto255_sub(bytes, point->bytes()));
     } else {
-	return copy_object()->neg();
+	return new RistrettoPoint(ristretto255_neg(bytes));
     }
 }
 
@@ -99,7 +55,15 @@ static RistrettoPoint operator- (varargs RistrettoPoint point)
  */
 static RistrettoPoint operator* (Scalar scalar)
 {
-    return copy_object()->mult(scalar);
+    return new RistrettoPoint(ristretto255_mult(bytes, scalar->bytes()));
+}
+
+/*
+ * equal to another point?
+ */
+int equals(RistrettoPoint point)
+{
+    return (bytes == point->bytes());
 }
 
 

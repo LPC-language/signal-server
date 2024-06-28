@@ -29,56 +29,9 @@ private string number;	/* internal big-endian ASN of scalar */
 /*
  * initialize scalar from little-endian bytes
  */
-static void create(string bytes)
+static void create(string bytes, varargs int internal)
 {
-    number = asn_mod("\0" + asn::reverse(bytes), ELL);
-}
-
-/*
- * add another scalar
- */
-Scalar add(Scalar scalar)
-{
-    number = asn_add(number, scalar->internal(), ELL);
-    return this_object();
-}
-
-/*
- * subtract another scalar
- */
-Scalar sub(Scalar scalar)
-{
-    number = asn_sub(number, scalar->internal(), ELL);
-    if (number[0] & 0x80) {
-	number = asn_add(number, ELL, ELL);
-    }
-    return this_object();
-}
-
-/*
- * negate
- */
-Scalar neg()
-{
-    number = asn_sub(ELL, number, ELL);
-    return this_object();
-}
-
-/*
- * multiply with another scalar
- */
-Scalar mult(Scalar scalar)
-{
-    number = asn_mult(number, scalar->internal(), ELL);
-    return this_object();
-}
-
-/*
- * equal to another scalar?
- */
-int equals(Scalar scalar)
-{
-    return (number == scalar->internal());
+    number = (internal) ? bytes : asn_mod("\0" + asn::reverse(bytes), ELL);
 }
 
 /*
@@ -86,7 +39,7 @@ int equals(Scalar scalar)
  */
 static Scalar operator+ (Scalar scalar)
 {
-    return copy_object()->add(scalar);
+    return new Scalar(asn_add(number, scalar->internal(), ELL), TRUE);
 }
 
 /*
@@ -96,9 +49,15 @@ static Scalar operator+ (Scalar scalar)
 static Scalar operator- (varargs Scalar scalar)
 {
     if (scalar) {
-	return copy_object()->sub(scalar);
+	string bytes;
+
+	bytes = asn_sub(number, scalar->internal(), ELL);
+	if (bytes[0] & 0x80) {
+	    bytes = asn_add(bytes, ELL, ELL);
+	}
+	return new Scalar(bytes, TRUE);
     } else {
-	return copy_object()->neg();
+	return new Scalar(asn_sub(ELL, number, ELL), TRUE);
     }
 }
 
@@ -107,7 +66,15 @@ static Scalar operator- (varargs Scalar scalar)
  */
 static Scalar operator* (Scalar scalar)
 {
-    return copy_object()->mult(scalar);
+    return new Scalar(asn_mult(number, scalar->internal(), ELL), TRUE);
+}
+
+/*
+ * equal to another scalar?
+ */
+int equals(Scalar scalar)
+{
+    return (number == scalar->internal());
 }
 
 
