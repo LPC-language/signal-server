@@ -80,7 +80,8 @@ static string protoTime(int time, float mtime)
 {
     string str;
 
-    str = asn::reverse(asn_add(asn_mult(asn::encode(time), "\x03\xe8", ASN64),
+    str = asn::reverse(asn_add(asn_mult("\0" + asn::encode(time), "\x03\xe8",
+					ASN64),
 			       asn::encode((int) (mtime * 1000.0)), ASN64));
     return protoFixed64(str);
 }

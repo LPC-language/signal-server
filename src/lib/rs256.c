@@ -76,7 +76,7 @@ static string rs256Sign(string message, X509Key key)
     if (strlen(m) > len) {
 	m = m[1 ..];
     } else {
-	m = asn::extend(m, len);
+	m = asn::unsignedExtend(m, len);
     }
     return m;
 }
