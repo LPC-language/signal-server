@@ -50,7 +50,6 @@ object select(string str)
 				  FALSE, ({
 	    CHAT_SERVER,
 	    STORAGE_SERVER,
-	    DIRECTORY_SERVER,
 	    CDSI_SERVER,
 	    UPTIME_SERVER,
 	    BACKUP_SERVER,
