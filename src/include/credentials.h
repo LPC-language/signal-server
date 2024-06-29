@@ -16,4 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+# define KeyPair		object "/usr/MsgServer/lib/KeyPair"
+
 # define CREDENTIALS_SERVER	"/usr/MsgServer/sys/credentials"

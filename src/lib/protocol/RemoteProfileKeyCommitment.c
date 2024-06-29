@@ -22,6 +22,9 @@
 inherit ProfileKeyCommitment;
 
 
+/*
+ * initialize ProfileKeyCommitment from a blob
+ */
 static void create(string blob)
 {
     if (strlen(blob) != 97) {

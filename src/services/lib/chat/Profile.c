@@ -20,6 +20,9 @@
 
 register(CHAT_SERVER, "PUT", "/v1/profile/",
 	 "putProfile", argHeaderAuth(), argEntityJson());
+register(CHAT_SERVER, "GET", "/v1/profile/{}/{}/{}",
+	 "getProfileKeyCredential", argHeaderOptAuth(),
+	 argHeader("Unidentified-Access-Key"));
 
 # else
 
@@ -27,9 +30,12 @@ register(CHAT_SERVER, "PUT", "/v1/profile/",
 # include "~HTTP/HttpResponse.h"
 # include "rest.h"
 # include "account.h"
+# include "protocol.h"
 
 inherit RestServer;
 private inherit base64 "/lib/util/base64";
+private inherit hex "/lib/util/hex";
+private inherit uuid "~/lib/uuid";
 
 
 /*
@@ -49,10 +55,51 @@ static void putProfile2(string accountId, mapping entity)
     Profile profile;
 
     /* XXX ignore avatar */
-    profile = PROFILE_SERVER->get(accountId, entity["version"]);
+    profile = PROFILE_SERVER->get(accountId,
+				  hex::decodeString(entity["version"]));
     profile->update(entity["name"], nil, entity["aboutEmoji"], entity["about"],
 		    entity["paymentAddress"],
 		    base64::decode(entity["commitment"]));
 }
 
+static int getProfileKeyCredential(string context, string uuid, string version,
+				   string credentialRequest, Account account,
+				   Device device, string accessKey)
+{
+    if (sscanf(credentialRequest, "%s?credentialType=expiringProfileKey",
+	       credentialRequest) == 0) {
+	return respond(context, HTTP_BAD_REQUEST, nil, nil);
+    }
+
+    /* XXX permitted? */
+    new Continuation("getProfileKeyCredential2", account->id(),
+		     hex::decodeString(version),
+		     hex::decodeString(credentialRequest))
+	->chain("respondJson", context, HTTP_OK)
+	->runNext();
+}
+
+static mapping getProfileKeyCredential2(string accountId, string version,
+				        string credentialRequest)
+{
+    Profile profile;
+    ProfileKeyCommitment commitment;
+    ProfileKeyCredentialRequest request;
+    int expirationTime;
+    ProfileKeyCredentialResponse response;
+
+    profile = PROFILE_SERVER->get(accountId, version);
+    commitment = new RemoteProfileKeyCommitment(profile->commitment());
+    request = new RemoteProfileKeyCredentialRequest(commitment,
+						    credentialRequest);
+
+    expirationTime = (time() + 7 * 86400) >> 7;
+    expirationTime -= expirationTime % 675;
+    expirationTime <<= 7;
+    response = new ProfileKeyCredentialResponse(request, accountId,
+						expirationTime,
+						secure_random(32));
+
+    return ([ "credential" : base64::encode(response->transport()) ]);
+}
 # endif

@@ -28,17 +28,20 @@ static void create()
     compile_object("lib/Profile");
     compile_object("lib/ShoHmacSha256");
     compile_object("lib/ShoSha256");
+    compile_object("lib/KeyPair");
     compile_object("lib/zkp/Scalar");
     compile_object("lib/zkp/RistrettoPoint");
     compile_object("lib/zkp/RemoteProof");
     compile_object("lib/zkp/Statement");
     compile_object("lib/protocol/RemoteProfileKeyCommitment");
     compile_object("lib/protocol/RemoteProfileKeyCredentialRequest");
+    compile_object("lib/protocol/ProfileKeyCredentialResponse");
     compile_object("obj/oneshot");
     compile_object("obj/fcm_sender");
     compile_object("obj/kvnode_exp");
     compile_object("sys/tls_server");
     compile_object("sys/rest_api");
+    compile_object("sys/params");
     compile_object("sys/cert");
     compile_object("sys/credentials");
     compile_object("sys/registration");
@@ -47,6 +50,5 @@ static void create()
     compile_object("sys/pni");
     compile_object("sys/keys");
     compile_object("sys/profiles");
-    compile_object("sys/params");
     compile_object("services/obj/server");
 }

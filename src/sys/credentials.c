@@ -16,21 +16,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+# include "zkp.h"
+# include "params.h"
+# include "Sho.h"
+# include "credentials.h"
+
 private inherit "~TLS/api/lib/hkdf";
 private inherit hex "/lib/util/hex";
 
 
-string userDeriveKey;	/* 32 bytes */
+string userDeriveKey;			/* 32 bytes */
 string key;
+KeyPair authCredentialKey;
+Scalar signingKey;
+RistrettoPoint publicKey;
+KeyPair receiptCredentialKey;
+KeyPair profileKeyCredentialKey;
+KeyPair authCredentialWithPniKey;
 
 /*
  * credentials server
  */
 static void create()
 {
+    Sho sho;
+
     /* XXX */
     userDeriveKey = secure_random(32);
     key = secure_random(32);
+
+    sho = PARAMS->serverSecretSho();
+    sho->absorb(secure_random(32));
+    sho->ratchet();
+
+    authCredentialKey = new KeyPair(sho, 4, 3);
+    /* profileKeyCredentialKey = */ new KeyPair(sho, 4, 4);
+    signingKey = sho->getScalar();
+    publicKey = new RistrettoPoint(ristretto255_basepoint()) * signingKey;
+    receiptCredentialKey = new KeyPair(sho, 4, 2);
+    /* pniCredentialKey = */ new KeyPair(sho, 6);
+    profileKeyCredentialKey = new KeyPair(sho, 5);
+    authCredentialWithPniKey = new KeyPair(sho, 5);
 }
 
 void initialize(string userDeriveKey, string key)
@@ -55,3 +81,9 @@ string *generate(string id, int derive, int truncate, int prepend)
     }
     return ({ id, ((prepend) ? data : time) + ":" + hex::format(signature) });
 }
+
+
+KeyPair authCredentialKey()		{ return authCredentialKey; }
+KeyPair receiptCredentialKey()		{ return receiptCredentialKey; }
+KeyPair profileKeyCredentialKey()	{ return profileKeyCredentialKey; }
+KeyPair authCredentialWithPniKey()	{ return authCredentialWithPniKey; }

@@ -17,3 +17,20 @@
  */
 
 # define PARAMS		"/usr/MsgServer/sys/params"
+
+
+/*
+ * credential parameters
+ */
+# define CRED_G_w		0
+# define CRED_G_wprime		1
+# define CRED_G_x0		2
+# define CRED_G_x1		3
+# define CRED_G_y		4
+# define CRED_G_m1		10
+# define CRED_G_m2		11
+# define CRED_G_m3		12
+# define CRED_G_m4		13
+# define CRED_G_m5		14
+# define CRED_G_V		15
+# define CRED_G_z		16

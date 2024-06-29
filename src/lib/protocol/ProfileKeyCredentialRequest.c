@@ -25,19 +25,12 @@ private RistrettoPoint publicKey;
 private RistrettoPoint D1, D2, E1, E2;
 private string proof;
 
-static void create(RistrettoPoint publicKey, RistrettoPoint D1,
-		   RistrettoPoint D2, RistrettoPoint E1, RistrettoPoint E2,
-		   string proof)
-{
-    ::publicKey = publicKey;
-    ::D1 = D1;
-    ::D2 = D2;
-    ::E1 = E1;
-    ::E2 = E2;
-    ::proof = proof;
-}
-
-int verifyProof(ProfileKeyCommitment commitment)
+/*
+ * initialize ProfileKeyCredentialRequest
+ */
+static void create(ProfileKeyCommitment commitment, RistrettoPoint publicKey,
+		   RistrettoPoint D1, RistrettoPoint D2, RistrettoPoint E1,
+		   RistrettoPoint E2, string proof)
 {
     Statement stmt;
     RistrettoPoint G_j1, G_j2, G_j3;
@@ -72,10 +65,21 @@ int verifyProof(ProfileKeyCommitment commitment)
 	"E2-J2" : E2 - commitment->J2(),
 	"-G_j2" : -G_j2
     ]);
+    if (!stmt->verify(proof, pointArgs, "")) {
+	error("Verification failed");
+    }
 
-    return stmt->verify(proof, pointArgs, "");
+    ::publicKey = publicKey;
+    ::D1 = D1;
+    ::D2 = D2;
+    ::E1 = E1;
+    ::E2 = E2;
+    ::proof = proof;
 }
 
+/*
+ * export as a blob
+ */
 string transport()
 {
     return "\0" + publicKey->bytes() +

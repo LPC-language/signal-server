@@ -20,3 +20,4 @@
 # define RemoteProfileKeyCommitment		object "/usr/MsgServer/lib/protocol/RemoteProfileKeyCommitment"
 # define ProfileKeyCredentialRequest		object "/usr/MsgServer/lib/protocol/ProfileKeyCredentialRequest"
 # define RemoteProfileKeyCredentialRequest	object "/usr/MsgServer/lib/protocol/RemoteProfileKeyCredentialRequest"
+# define ProfileKeyCredentialResponse		object "/usr/MsgServer/lib/protocol/ProfileKeyCredentialResponse"

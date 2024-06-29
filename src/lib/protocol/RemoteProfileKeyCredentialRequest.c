@@ -22,13 +22,17 @@
 inherit ProfileKeyCredentialRequest;
 
 
-static void create(string blob)
+/*
+ * initialize ProfileKeyCredentialRequest from a blob
+ */
+static void create(ProfileKeyCommitment commitment, string blob)
 {
     if (strlen(blob) != 329 || blob[161 .. 168] != "\xa0\0\0\0\0\0\0\0") {
 	error("Bad ProfileKeyCredentialRequest");
     }
 
-    ::create(new RistrettoPoint(blob[1 .. 32]),
+    ::create(commitment,
+	     new RistrettoPoint(blob[1 .. 32]),
 	     new RistrettoPoint(blob[33 .. 64]),
 	     new RistrettoPoint(blob[65 .. 96]),
 	     new RistrettoPoint(blob[97 .. 128]),

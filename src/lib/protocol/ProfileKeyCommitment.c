@@ -22,6 +22,9 @@
 
 private RistrettoPoint J1, J2, J3;
 
+/*
+ * initialize ProfileKeyCommitment
+ */
 static void create(RistrettoPoint J1, RistrettoPoint J2, RistrettoPoint J3)
 {
     ::J1 = J1;
@@ -29,6 +32,9 @@ static void create(RistrettoPoint J1, RistrettoPoint J2, RistrettoPoint J3)
     ::J3 = J3;
 }
 
+/*
+ * export as a blob
+ */
 string transport()
 {
     return "\0" + J1->bytes() + J2->bytes() + J3->bytes();
