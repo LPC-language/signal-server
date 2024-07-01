@@ -20,6 +20,9 @@
 
 register(CHAT_SERVER, "PUT", "/v1/profile/",
 	 "putProfile", argHeaderAuth(), argEntityJson());
+register(CHAT_SERVER, "GET", "/v1/profile/{}/{}",
+	 "getVersionedProfile", argHeaderOptAuth(),
+	 argHeader("Unidentified-Access-Key"));
 register(CHAT_SERVER, "GET", "/v1/profile/{}/{}/{}",
 	 "getProfileKeyCredential", argHeaderOptAuth(),
 	 argHeader("Unidentified-Access-Key"));
@@ -36,7 +39,50 @@ inherit RestServer;
 private inherit base64 "/lib/util/base64";
 private inherit hex "/lib/util/hex";
 private inherit uuid "~/lib/uuid";
+private inherit "~TLS/api/lib/hkdf";
 
+
+# define B32  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+
+private mapping baseProfileResponse(Account account, string uuid)
+{
+    string ua;
+    Device device;
+
+    ua = account->unidentifiedAccessKey();
+    if (ua) {
+	ua = base64::encode(HMAC(base64::decode(ua), B32, "SHA256"));
+    }
+    device = account->device(1);
+    return ([
+	"identityKey" : account->identityKey(),
+	"unidentifiedAccess" : ua,
+	"unrestrictedUnidentifiedAccess" : account->unrestrictedAccess(),
+	"capabilities" : ([
+	    "gv1-migration" : TRUE,
+	    "senderKey" : device->capSenderKey(),
+	    "announcementGroup" : device->capAnnouncementGroup(),
+	    "changeNumber" : device->capChangeNumber(),
+	    "stories" : device->capStories(),
+	    "giftBadges" : device->capGiftBadges(),
+	    "paymentActivation" : FALSE,
+	    "pni" : device->capPni()
+	]),
+	"badges" : ({ }),
+	"uuid" : uuid
+    ]);
+}
+
+private mapping versionedProfileResponse(Profile profile)
+{
+    return ([
+	"name": profile->name(),
+	"about" : profile->about(),
+	"aboutEmoji" : profile->aboutEmoji(),
+	"avatar" : profile->avatar(),
+	"paymentAddress" : profile->paymentAddress(),
+    ]);
+}
 
 /*
  * upload profile
@@ -62,6 +108,29 @@ static void putProfile2(string accountId, mapping entity)
 		    base64::decode(entity["commitment"]));
 }
 
+static int getVersionedProfile(string context, string uuid, string version,
+			       Account account, Device device, string accessKey)
+{
+    /* XXX permitted? */
+    new Continuation("getVersionedProfile2", uuid, version)
+	->chain("respondJson", context, HTTP_OK)
+	->runNext();
+}
+
+static mapping getVersionedProfile2(string uuid, string version)
+{
+    string accountId;
+    Account account;
+    Profile profile;
+
+    accountId = uuid::decode(uuid);
+    account = ACCOUNT_SERVER->get(accountId);
+    profile = PROFILE_SERVER->get(accountId, hex::decodeString(version));
+
+    return baseProfileResponse(account, uuid) +
+	   versionedProfileResponse(profile);
+}
+
 static int getProfileKeyCredential(string context, string uuid, string version,
 				   string credentialRequest, Account account,
 				   Device device, string accessKey)
@@ -72,23 +141,27 @@ static int getProfileKeyCredential(string context, string uuid, string version,
     }
 
     /* XXX permitted? */
-    new Continuation("getProfileKeyCredential2", account->id(),
-		     hex::decodeString(version),
+    new Continuation("getProfileKeyCredential2", uuid, version,
 		     hex::decodeString(credentialRequest))
 	->chain("respondJson", context, HTTP_OK)
 	->runNext();
 }
 
-static mapping getProfileKeyCredential2(string accountId, string version,
+static mapping getProfileKeyCredential2(string uuid, string version,
 				        string credentialRequest)
 {
+    string accountId;
+    Account account;
     Profile profile;
     ProfileKeyCommitment commitment;
     ProfileKeyCredentialRequest request;
     int expirationTime;
     ProfileKeyCredentialResponse response;
+    mapping reply;
 
-    profile = PROFILE_SERVER->get(accountId, version);
+    accountId = uuid::decode(uuid);
+    account = ACCOUNT_SERVER->get(accountId);
+    profile = PROFILE_SERVER->get(accountId, hex::decodeString(version));
     commitment = new RemoteProfileKeyCommitment(profile->commitment());
     request = new RemoteProfileKeyCredentialRequest(commitment,
 						    credentialRequest);
@@ -100,6 +173,10 @@ static mapping getProfileKeyCredential2(string accountId, string version,
 						expirationTime,
 						secure_random(32));
 
-    return ([ "credential" : base64::encode(response->transport()) ]);
+    reply = baseProfileResponse(account, uuid) +
+	    versionedProfileResponse(profile);
+    reply["credential"] = base64::encode(response->transport());
+
+    return reply;
 }
 # endif

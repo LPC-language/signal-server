@@ -20,7 +20,7 @@
 
 
 # define DISCOVERABLE		0
-# define UNIDENTIFIED_ACCESS	1
+# define UNRESTRICTED_ACCESS	1
 # define VIDEO			2
 # define VOICE			3
 
@@ -48,10 +48,10 @@ static void create(string phoneNumber, string pni, Device device)
     devices = ([ device->id() : device ]);
 }
 
-static void update(int discoverable, string pin, int pniRegistrationId,
-		   string recoveryPassword, string registrationLock,
-		   string signalingKey, string unidentifiedAccessKey,
-		   int unidentifiedAccess, int video, int voice)
+void update(int discoverable, string pin, int pniRegistrationId,
+	    string recoveryPassword, string registrationLock,
+	    string signalingKey, string unidentifiedAccessKey,
+	    int unrestrictedAccess, int video, int voice)
 {
     ::pin = pin;
     ::pniRegistrationId = pniRegistrationId;
@@ -61,7 +61,7 @@ static void update(int discoverable, string pin, int pniRegistrationId,
     ::unidentifiedAccessKey = unidentifiedAccessKey;
     flags = 0;
     flags |= discoverable <<		DISCOVERABLE;
-    flags |= unidentifiedAccess <<	UNIDENTIFIED_ACCESS;
+    flags |= unrestrictedAccess <<	UNRESTRICTED_ACCESS;
     flags |= video <<			VIDEO;
     flags |= voice <<			VOICE;
 }
@@ -109,8 +109,9 @@ int discoverable()		{ return (flags >> DISCOVERABLE) & 1; }
 string pin()			{ return pin; }
 int pniRegistrationId()		{ return pniRegistrationId; }
 string registrationLock()	{ return registrationLock; }
+string unidentifiedAccessKey()	{ return unidentifiedAccessKey; }
 string identityKey()		{ return identityKey; }
 string pniKey()			{ return pniKey; }
-int unidentifiedAccess()	{ return (flags >> UNIDENTIFIED_ACCESS) & 1; }
+int unrestrictedAccess()	{ return (flags >> UNRESTRICTED_ACCESS) & 1; }
 int video()			{ return (flags >> VIDEO) & 1; }
 int voice()			{ return (flags >> VOICE) & 1; }
