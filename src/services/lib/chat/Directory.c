@@ -18,32 +18,39 @@
 
 # ifdef REGISTER
 
-/*
- * register REST API endpoints
- */
-
-# include "chat/Registration.c"
-# include "chat/Keys.c"
-# include "chat/Accounts.c"
-# include "chat/Websocket.c"
-# include "chat/Certificate.c"
-# include "chat/Config.c"
-# include "chat/Profile.c"
-# include "chat/Backup.c"
-# include "chat/Storage.c"
-# include "chat/Directory.c"
+register(CHAT_SERVER, "GET", "/v2/directory/auth",
+	 "getDirectoryAuth", argHeaderAuth());
 
 # else
 
-inherit "chat/Registration";
-inherit "chat/Keys";
-inherit "chat/Accounts";
-inherit "chat/Websocket";
-inherit "chat/Certificate";
-inherit "chat/Config";
-inherit "chat/Profile";
-inherit "chat/Backup";
-inherit "chat/Storage";
-inherit "chat/Directory";
+# include "~HTTP/HttpResponse.h"
+# include "rest.h"
+# include "account.h"
+# include "credentials.h"
+
+inherit RestServer;
+private inherit uuid "~/lib/uuid";
+
+
+/*
+ * storage credentials
+ */
+static void getDirectoryAuth(string context, Account account, Device device)
+{
+    call_out("getDirectoryAuth2", 0, context, account->id());
+}
+
+static void getDirectoryAuth2(string context, string id)
+{
+    string username, password;
+
+    ({
+	username,
+	password
+    }) = CREDENTIALS_SERVER->generate(uuid::encode(id), TRUE, TRUE, FALSE);
+    respondJson(context, HTTP_OK, ([
+	"username" : username, "password" : password
+    ]));
+}
 
 # endif
