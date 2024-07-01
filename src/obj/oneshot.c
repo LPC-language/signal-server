@@ -67,7 +67,7 @@ static void response(int code, StringBuffer entity)
     callback->runNext(code, entity);
     callback = nil;
     doneResponse();
-    disconnect();
+    terminate();
 }
 
 /*

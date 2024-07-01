@@ -211,16 +211,18 @@ void receiveEntity(StringBuffer entity)
  */
 static void doneResponse()
 {
-    connection->doneResponse();
+    if (connection) {
+	connection->doneResponse();
+    }
 }
 
 /*
  * break the connection
  */
-static void disconnect()
+static void terminate()
 {
     if (connection) {
-	connection->disconnect();
+	connection->terminate();
     }
 }
 

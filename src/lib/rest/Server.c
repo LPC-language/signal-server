@@ -553,7 +553,7 @@ void doneChunk()
 	if (!websocket) {
 	    connection->doneRequest();
 	} else if (opcode == WEBSOCK_CLOSE) {
-	    connection->disconnect();
+	    connection->terminate();
 	} else {
 	    connection->expectWsFrame();
 	}
@@ -563,10 +563,10 @@ void doneChunk()
 /*
  * break the connection
  */
-static void disconnect()
+static void terminate()
 {
     if (connection) {
-	connection->disconnect();
+	connection->terminate();
     }
 }
 
