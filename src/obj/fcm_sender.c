@@ -159,6 +159,7 @@ static void response(int code, StringBuffer entity)
 	call_out("sendMessage", 1);	/* again */
 	break;
     }
+    doneResponse();
 }
 
 /*
