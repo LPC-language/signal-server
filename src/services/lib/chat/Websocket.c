@@ -28,33 +28,36 @@ register(CHAT_SERVER, "GET", "/v1/websocket/{}",
 # else
 
 # include <String.h>
+# include <Continuation.h>
 # include "~HTTP/HttpResponse.h"
 # include "~HTTP/HttpField.h"
 # include "rest.h"
 # include "account.h"
+# include <type.h>
 
 inherit RestServer;
 private inherit base64 "/lib/util/base64";
+private inherit json "/lib/util/json";
+private inherit "~/lib/proto";
+private inherit "/lib/util/random";
 
 
-# define GUID	"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+private mapping outgoing;	/* context : callback */
+
+/*
+ * initialize websocket layer
+ */
+static void create()
+{
+    outgoing = ([ ]);
+}
 
 static int getWebsocket(string context, string upgrade, string connection,
 			string key, string version)
 {
-    int code;
-
     if (upgrade == "websocket" && connection == "Upgrade" && key != nil &&
 	version == "13") {
-	code = respond(context, HTTP_SWITCHING_PROTOCOLS, nil, nil, ([
-	    "Upgrade" : ({ "websocket" }),
-	    "Connection" : ({ "Upgrade" }),
-	    "Sec-WebSocket-Accept" : base64::encode(hash_string("SHA1",
-								key + GUID))
-	]));
-	upgradeToWebSocket();
-
-	return code;
+	return upgradeToWebSocket("chat", key);
     } else {
 	return respond(context, HTTP_BAD_REQUEST, nil, nil);
     }
@@ -64,7 +67,6 @@ static int getWebsocketLogin(string context, string param, string upgrade,
 			     string connection, string key, string version)
 {
     string login, password;
-    int code;
 
     if (sscanf(param, "?login=%s&password=%s", login, password) != 2) {
 	return respond(context, HTTP_BAD_REQUEST, nil, nil);
@@ -72,17 +74,151 @@ static int getWebsocketLogin(string context, string param, string upgrade,
 
     if (upgrade == "websocket" && connection == "Upgrade" && key != nil &&
 	version == "13") {
-	code = respond(context, HTTP_SWITCHING_PROTOCOLS, nil, nil, ([
-	    "Upgrade" : ({ "websocket" }),
-	    "Connection" : ({ "Upgrade" }),
-	    "Sec-WebSocket-Accept" : base64::encode(hash_string("SHA1",
-								key + GUID))
-	]));
-	upgradeToWebSocket(login, password);
-
-	return code;
+	return upgradeToWebSocket("chat", key, login, password);
     } else {
 	return respond(context, HTTP_BAD_REQUEST, nil, nil);
+    }
+}
+
+/*
+ * send a WebSocket request
+ */
+static void chatSendRequest(string verb, string path, StringBuffer body,
+			    mapping extraHeaders, Continuation cont,
+			    varargs mixed arguments...)
+{
+    StringBuffer request, chunk;
+    string context, *indices;
+    mixed *values;
+    int sz, i;
+
+    request = new StringBuffer("\12" + protoString(verb) +
+			       "\22" + protoString(path));
+    if (body) {
+	request->append("\32");
+	request->append(protoStrbuf(body));
+    }
+    if (cont) {
+	/* expect a response */
+	do {
+	    context = random_string(8);
+	} while (outgoing[context]);
+	outgoing[context] = ({ cont }) + arguments;
+    } else {
+	context = "\1";		/* no response */
+    }
+    request->append("\40");
+    request->append(protoAsn(context));
+
+    if (extraHeaders) {
+	indices = map_indices(extraHeaders);
+	values = map_values(extraHeaders);
+	for (sz = sizeof(indices), i = 0; i < sz; i++) {
+	    request->append(
+		"\52" + protoString(indices[i] + ": " +
+				    ((typeof(values[i]) == T_ARRAY) ?
+				      values[i][0] : values[i]))
+	    );
+	}
+    }
+
+    chunk = new StringBuffer("\010\001\022");
+    chunk->append(protoStrbuf(request));
+    sendWsChunk(chunk);
+}
+
+/*
+ * receive WebSocket response
+ */
+static void chatReceiveResponse(StringBuffer chunk)
+{
+    int c, offset;
+    string buf, id, code, message, headers, header;
+    StringBuffer entity;
+    HttpResponse response;
+    mixed *handle;
+
+    ({ c, buf, offset }) = parseByte(chunk, nil, 0);
+    if (c != 010) {
+	error("WebSocketResponseMessage.id expected");
+    }
+    ({ id, buf, offset }) = parseAsn(chunk, buf, offset);
+    ({ c, buf, offset }) = parseByte(chunk, nil, 0);
+    if (c != 020) {
+	error("WebSocketResponseMessage.status expected");
+    }
+    ({ code, buf, offset }) = parseInt(chunk, buf, offset);
+    ({ c, buf, offset }) = parseByte(chunk, buf, offset);
+    if (c != 032) {
+	error("WebSocketResponseMessage.message expected");
+    }
+    ({ message, buf, offset }) = parseString(chunk, buf, offset);
+
+    if (!parseDone(chunk, buf, offset)) {
+	({ c, buf, offset }) = parseByte(chunk, buf, offset);
+	switch (c) {
+	case 042:
+	    ({ entity, buf, offset }) = parseStrbuf(chunk, buf, offset);
+	    if (parseDone(chunk, buf, offset)) {
+		break;
+	    }
+	    ({ c, buf, offset }) = parseByte(chunk, buf, offset);
+	    if (c != 052) {
+		error("WebSocketResponseMessage.headers expected");
+	    }
+	    /* fall through */
+	case 052:
+	    headers = "";
+	    for (;;) {
+		({ header, buf, offset }) = parseString(chunk, buf, offset);
+		headers += header + "\n";
+		if (parseDone(chunk, buf, offset)) {
+		    break;
+		}
+
+		({ c, buf, offset }) = parseByte(chunk, buf, offset);
+		if (c != 052) {
+		    error("WebSocketResponseMessage.headers expected");
+		}
+	    }
+	    break;
+
+	default:
+	    error("WebSocketResponseMessage.headers expected");
+	}
+    }
+
+    response = new HttpResponse(1.1, code, message);
+    if (strlen(headers) != 0) {
+	response->setHeaders(new RemoteHttpFields(headers));
+    }
+
+    handle = outgoing[id];
+    outgoing[id] = nil;
+    if (handle) {
+	mixed *args;
+	int i;
+
+	args = handle[1 ..];
+	for (i = sizeof(args); --i >= 0; ) {
+	    if (typeof(args[i]) == T_STRING) {
+		args[i] = response->headerValue(args[i]);
+	    } else {
+		switch (args[i]) {
+		case ARG_ENTITY:
+		    args[i] = entity;
+		    break;
+
+		case ARG_ENTITY_JSON:
+		    args[i] = (entity) ? json::decode(entity->chunk()) : nil;
+		    break;
+		}
+	    }
+	}
+
+	handle[0]->runNext(response->code(), args...);
+    } else {
+	error("Unknown response");
     }
 }
 

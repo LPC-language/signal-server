@@ -289,3 +289,11 @@ static mixed *parseFixed32(StringBuffer chunk, string buf, int offset)
 
     return ({ str + buf[offset .. offset + len - 1], buf, offset + len });
 }
+
+/*
+ * nothing left to parse?
+ */
+static int parseDone(StringBuffer chunk, string buf, int offset)
+{
+    return (offset >= strlen(buf) && chunk->length() == 0);
+}

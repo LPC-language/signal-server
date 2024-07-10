@@ -24,6 +24,7 @@
 # include "services.h"
 # include "rest.h"
 # include "account.h"
+# include "credentials.h"
 # include "~/config/services"
 # include <config.h>
 # include <version.h>
@@ -37,11 +38,13 @@ private inherit uuid "~/lib/uuid";
 private inherit "~/lib/proto";
 
 
+# define GUID	"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+
 private object connection;	/* TLS connection */
 private HttpRequest request;	/* most recent request */
 private mixed *handle;		/* call handle */
 private string login, password;	/* websocket authentication */
-private int websocket;		/* WebSocket protocol enabled? */
+private string websocket;	/* WebSocket service */
 private int opcode, flags;	/* opcode and flags of last WebSocket frame */
 
 /*
@@ -52,6 +55,14 @@ void init(object connection)
     if (!::connection) {
 	::connection = connection;
     }
+}
+
+/*
+ * send a StringBuffer chunk via WebSocket
+ */
+static void sendWsChunk(StringBuffer chunk)
+{
+    connection->sendWsChunk(WEBSOCK_BINARY, WEBSOCK_FIN, 0, chunk);
 }
 
 /*
@@ -185,7 +196,7 @@ private void wsRespond(string context, int code, StringBuffer entity,
 
     chunk = new StringBuffer("\010\002\032");
     chunk->append(protoStrbuf(response));
-    connection->sendWsChunk(WEBSOCK_BINARY, WEBSOCK_FIN, 0, chunk);
+    sendWsChunk(chunk);
 }
 
 /*
@@ -421,11 +432,18 @@ void receiveEntity(StringBuffer entity)
 /*
  * upgrade connection to WebSocket protocol
  */
-static void upgradeToWebSocket(varargs string login, string password)
+static int upgradeToWebSocket(string service, string key, varargs string login,
+			      string password)
 {
+    websocket = service;
     ::login = login;
     ::password = password;
-    websocket = TRUE;
+
+    return respond(nil, HTTP_SWITCHING_PROTOCOLS, nil, nil, ([
+	"Upgrade" : ({ "websocket" }),
+	"Connection" : ({ "Upgrade" }),
+	"Sec-WebSocket-Accept" : base64::encode(hash_string("SHA1", key + GUID))
+    ]));
 }
 
 /*
@@ -470,8 +488,8 @@ private void receiveWsRequest(StringBuffer chunk)
     }
     ({ context, buf, offset }) = parseAsn(chunk, buf, offset);
 
-    for (headers = ""; offset < strlen(buf) || chunk->length() != 0;
-	 headers += header + "\n") {
+    for (headers = ""; !parseDone(chunk, buf, offset); headers += header + "\n")
+    {
 	({ c, buf, offset }) = parseByte(chunk, buf, offset);
 	if (c != 052) {
 	    error("WebSocketRequestMessage.headers expected");
@@ -499,12 +517,11 @@ void receiveWsChunk(StringBuffer chunk)
 {
     int c, offset;
     string buf;
-    StringBuffer mesg;
 
     if (previous_object() == connection) {
 	if (opcode == WEBSOCK_CLOSE) {
 	    connection->sendWsChunk(WEBSOCK_CLOSE, WEBSOCK_FIN, 0, chunk);
-	} else {
+	} else if (websocket == "chat") {
 	    ({ c, buf, offset }) = parseByte(chunk, nil, 0);
 	    if (c != 010) {
 		error("WebSocketMessage.type expected");
@@ -516,8 +533,8 @@ void receiveWsChunk(StringBuffer chunk)
 		if (c != 022) {
 		    error("WebSockMessage.request expected");
 		}
-		({ mesg, buf, offset }) = parseStrbuf(chunk, buf, offset);
-		receiveWsRequest(mesg);
+		({ chunk, buf, offset }) = parseStrbuf(chunk, buf, offset);
+		receiveWsRequest(chunk);
 		break;
 
 	    case 2:	/* response */
@@ -525,13 +542,15 @@ void receiveWsChunk(StringBuffer chunk)
 		if (c != 032) {
 		    error("WebSockMessage.response expected");
 		}
-		({ mesg, buf, offset }) = parseStrbuf(chunk, buf, offset);
-		error("Response not implemented");
+		({ chunk, buf, offset }) = parseStrbuf(chunk, buf, offset);
+		call_other(this_object(), "chatReceiveResponse", chunk);
 		break;
 
 	    default:
 		error("Unknown websocket message");
 	    }
+	} else {
+	    call_other(this_object(), websocket + "ReceiveChunk", chunk);
 	}
     }
 }
