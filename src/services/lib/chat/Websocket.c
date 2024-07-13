@@ -55,7 +55,7 @@ static void create()
 static int getWebsocket(string context, string upgrade, string connection,
 			string key, string version)
 {
-    if (upgrade == "websocket" && connection == "Upgrade" && key != nil &&
+    if (upgrade == "websocket" && connection == "Upgrade" && key &&
 	version == "13") {
 	return upgradeToWebSocket("chat", key);
     } else {
@@ -72,7 +72,7 @@ static int getWebsocketLogin(string context, string param, string upgrade,
 	return respond(context, HTTP_BAD_REQUEST, nil, nil);
     }
 
-    if (upgrade == "websocket" && connection == "Upgrade" && key != nil &&
+    if (upgrade == "websocket" && connection == "Upgrade" && key &&
 	version == "13") {
 	return upgradeToWebSocket("chat", key, login, password);
     } else {
@@ -124,7 +124,7 @@ static void chatSendRequest(string verb, string path, StringBuffer body,
 
     chunk = new StringBuffer("\010\001\022");
     chunk->append(protoStrbuf(request));
-    sendWsChunk(chunk);
+    sendChunk(chunk);
 }
 
 /*

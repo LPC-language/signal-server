@@ -18,5 +18,12 @@
 
 # include "services.h"
 
-inherit ChatServices;
+inherit chat ChatServices;
 inherit StorageServices;
+inherit CdsiServices;
+
+
+static void create()
+{
+    chat::create();
+}

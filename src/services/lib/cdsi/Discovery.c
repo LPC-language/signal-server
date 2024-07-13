@@ -18,39 +18,28 @@
 
 # ifdef REGISTER
 
-register(CHAT_SERVER, "GET", "/v2/directory/auth",
-	 "getDirectoryAuth", argHeaderAuth());
+register(CDSI_SERVER, "GET", "/v1/{}/discovery",
+	 "getDiscovery", argHeader("Authorization"), argHeader("Upgrade"),
+	 argHeader("Connection"), argHeader("Sec-WebSocket-Key"),
+	 argHeader("Sec-WebSocket-Version"));
 
 # else
 
 # include "~HTTP/HttpResponse.h"
+# include "~HTTP/HttpField.h"
 # include "rest.h"
-# include "account.h"
-# include "credentials.h"
 
 inherit RestServer;
-private inherit uuid "~/lib/uuid";
 
 
 /*
- * CDSI credentials
+ * CDSI discovery
  */
-static void getDirectoryAuth(string context, Account account, Device device)
+static int getDiscovery(string context, string enclave, HttpAuthentication auth,
+			string upgrade, string connection, string key,
+			string version)
 {
-    call_out("getDirectoryAuth2", 0, context, account->id());
-}
-
-static void getDirectoryAuth2(string context, string id)
-{
-    string username, password;
-
-    ({
-	username,
-	password
-    }) = CREDENTIALS_SERVER->generate(uuid::encode(id), TRUE, TRUE, FALSE);
-    respondJson(context, HTTP_OK, ([
-	"username" : username, "password" : password
-    ]));
+    return respond(context, HTTP_UNAUTHORIZED, nil, nil);
 }
 
 # endif

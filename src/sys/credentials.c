@@ -112,6 +112,30 @@ string *generate(string id, int derive, int truncate, int prepend)
     return ({ id, ((prepend) ? data : time) + ":" + hex::format(signature) });
 }
 
+int verify(string id, string credential, int truncate, int prepend)
+{
+    int time;
+    string cid, data, signature;
+
+    if (prepend) {
+	if (sscanf(credential, "%s:%d:%s", cid, time, credential) != 3 ||
+	    cid != id) {
+	    return 0;
+	}
+    } else if (sscanf(credential, "%d:%s", time, credential) != 2) {
+	return 0;
+    }
+    signature = HMAC(key, id + ":" + time, "SHA256");
+    if (truncate) {
+	signature = signature[.. 9];
+    }
+    if (credential != hex::format(signature)) {
+	return 0;
+    }
+
+    return time;
+}
+
 
 KeyPair authCredentialKey()		{ return authCredentialKey; }
 KeyPair receiptCredentialKey()		{ return receiptCredentialKey; }

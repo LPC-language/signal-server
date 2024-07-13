@@ -60,8 +60,11 @@ void init(object connection)
 /*
  * send a StringBuffer chunk via WebSocket
  */
-static void sendWsChunk(StringBuffer chunk)
+static void sendChunk(StringBuffer chunk)
 {
+    if (!websocket) {
+	error("Not a WebSocket connection");
+    }
     connection->sendWsChunk(WEBSOCK_BINARY, WEBSOCK_FIN, 0, chunk);
 }
 
@@ -196,7 +199,7 @@ private void wsRespond(string context, int code, StringBuffer entity,
 
     chunk = new StringBuffer("\010\002\032");
     chunk->append(protoStrbuf(response));
-    sendWsChunk(chunk);
+    sendChunk(chunk);
 }
 
 /*
@@ -435,15 +438,19 @@ void receiveEntity(StringBuffer entity)
 static int upgradeToWebSocket(string service, string key, varargs string login,
 			      string password)
 {
-    websocket = service;
-    ::login = login;
-    ::password = password;
+    int code;
 
-    return respond(nil, HTTP_SWITCHING_PROTOCOLS, nil, nil, ([
+    code = respond(nil, HTTP_SWITCHING_PROTOCOLS, nil, nil, ([
 	"Upgrade" : ({ "websocket" }),
 	"Connection" : ({ "Upgrade" }),
 	"Sec-WebSocket-Accept" : base64::encode(hash_string("SHA1", key + GUID))
     ]));
+
+    websocket = service;
+    ::login = login;
+    ::password = password;
+
+    return code;
 }
 
 /*
@@ -553,14 +560,6 @@ void receiveWsChunk(StringBuffer chunk)
 	    call_other(this_object(), websocket + "ReceiveChunk", chunk);
 	}
     }
-}
-
-/*
- * send a WebSocket chunk
- */
-static void sendWebSocket(int opcode, int flags, StringBuffer chunk)
-{
-    connection->sendWsChunk(opcode, flags, 0, chunk);
 }
 
 /*

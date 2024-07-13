@@ -21,5 +21,6 @@
 
 # define ChatServices		"/usr/MsgServer/services/lib/Chat"
 # define StorageServices	"/usr/MsgServer/services/lib/Storage"
+# define CdsiServices		"/usr/MsgServer/services/lib/Cdsi"
 
 # define RegistrationService	"/usr/MsgServer/services/lib/chat/Registration"
