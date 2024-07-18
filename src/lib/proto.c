@@ -122,6 +122,9 @@ static mixed *parseByte(StringBuffer chunk, string buf, int offset)
 {
     if (!buf || offset >= strlen(buf)) {
 	buf = chunk->chunk();
+	if (!buf) {
+	    return ({ -1, buf, offset });
+	}
 	offset = 0;
     }
 
@@ -185,11 +188,10 @@ static mixed *parseAsn(StringBuffer chunk, string buf, int offset)
 }
 
 /*
- * parse a 64 bit entity
+ * get a number of bytes from a chunk
  */
-static mixed *parseFixed64(StringBuffer chunk, string buf, int offset)
+static mixed *parseBytes(StringBuffer chunk, string buf, int offset, int len)
 {
-    int len;
     string str;
 
     if (!buf) {
@@ -198,7 +200,7 @@ static mixed *parseFixed64(StringBuffer chunk, string buf, int offset)
     }
 
     str = "";
-    for (len = 8; len > strlen(buf) - offset; ) {
+    while (len > strlen(buf) - offset) {
 	len -= strlen(buf) - offset;
 	str += buf[offset ..];
 	buf = chunk->chunk();
@@ -206,6 +208,14 @@ static mixed *parseFixed64(StringBuffer chunk, string buf, int offset)
     }
 
     return ({ str + buf[offset .. offset + len - 1], buf, offset + len });
+}
+
+/*
+ * parse a 64 bit entity
+ */
+static mixed *parseFixed64(StringBuffer chunk, string buf, int offset)
+{
+    return parseBytes(chunk, buf, offset, 8);
 }
 
 /*
@@ -231,18 +241,9 @@ static mixed *parseTime(StringBuffer chunk, string buf, int offset)
 static mixed *parseString(StringBuffer chunk, string buf, int offset)
 {
     int len;
-    string str;
 
     ({ len, buf, offset }) = parseInt(chunk, buf, offset);
-    str = "";
-    while (len > strlen(buf) - offset) {
-	len -= strlen(buf) - offset;
-	str += buf[offset ..];
-	buf = chunk->chunk();
-	offset = 0;
-    }
-
-    return ({ str + buf[offset .. offset + len - 1], buf, offset + len });
+    return parseBytes(chunk, buf, offset, len);
 }
 
 /*
@@ -271,23 +272,7 @@ static mixed *parseStrbuf(StringBuffer chunk, string buf, int offset)
  */
 static mixed *parseFixed32(StringBuffer chunk, string buf, int offset)
 {
-    int len;
-    string str;
-
-    if (!buf) {
-	buf = chunk->chunk();
-	offset = 0;
-    }
-
-    str = "";
-    for (len = 4; len > strlen(buf) - offset; ) {
-	len -= strlen(buf) - offset;
-	str += buf[offset ..];
-	buf = chunk->chunk();
-	offset = 0;
-    }
-
-    return ({ str + buf[offset .. offset + len - 1], buf, offset + len });
+    return parseBytes(chunk, buf, offset, 4);
 }
 
 /*

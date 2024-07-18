@@ -247,7 +247,7 @@ static Account postRegistration2(string phoneNumber, string password,
     account->update(attr["discoverableByPhoneNumber"], attr["pin"],
 		    attr["pniRegistrationId"], attr["recoveryPassword"],
 		    attr["registrationLock"], attr["signalingKey"],
-		    attr["unidentifiedAccessKey"],
+		    base64::decode(attr["unidentifiedAccessKey"]),
 		    attr["unrestrictedUnidentifiedAccess"], attr["video"],
 		    attr["voice"]);
 

@@ -46,6 +46,7 @@ private mixed *handle;		/* call handle */
 private string login, password;	/* websocket authentication */
 private string websocket;	/* WebSocket service */
 private int opcode, flags;	/* opcode and flags of last WebSocket frame */
+private int closing;		/* closing WebSocket connection */
 
 /*
  * establish connection
@@ -65,7 +66,25 @@ static void sendChunk(StringBuffer chunk)
     if (!websocket) {
 	error("Not a WebSocket connection");
     }
+    if (closing) {
+	error("WebSocket connection is closing");
+    }
     connection->sendWsChunk(WEBSOCK_BINARY, WEBSOCK_FIN, 0, chunk);
+}
+
+/*
+ * close WebSocket connection
+ */
+static void sendClose(string code)
+{
+    if (!websocket) {
+	error("Not a WebSocket connection");
+    }
+    if (!closing) {
+	closing = TRUE;
+	connection->sendWsChunk(WEBSOCK_CLOSE, WEBSOCK_FIN, 0,
+				new StringBuffer(code));
+    }
 }
 
 /*
@@ -527,7 +546,7 @@ void receiveWsChunk(StringBuffer chunk)
 
     if (previous_object() == connection) {
 	if (opcode == WEBSOCK_CLOSE) {
-	    connection->sendWsChunk(WEBSOCK_CLOSE, WEBSOCK_FIN, 0, chunk);
+	    sendClose(chunk->chunk());
 	} else if (websocket == "chat") {
 	    ({ c, buf, offset }) = parseByte(chunk, nil, 0);
 	    if (c != 010) {

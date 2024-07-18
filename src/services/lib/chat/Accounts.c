@@ -30,6 +30,7 @@ register(CHAT_SERVER, "PUT", "/v1/accounts/attributes/",
 # include "account.h"
 
 inherit RestServer;
+private inherit base64 "/lib/util/base64";
 
 
 /*
@@ -63,7 +64,7 @@ static void putAccountsAttributes(string context, Account account,
     account->update(entity["discoverableByPhoneNumber"], entity["pin"],
 		    entity["pniRegistrationId"], entity["recoveryPassword"],
 		    entity["registrationLock"], entity["signalingKey"],
-		    entity["unidentifiedAccessKey"],
+		    base64::decode(entity["unidentifiedAccessKey"]),
 		    entity["unrestrictedUnidentifiedAccess"], entity["video"],
 		    entity["voice"]);
 

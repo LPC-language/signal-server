@@ -51,7 +51,7 @@ private mapping baseProfileResponse(Account account, string uuid)
 
     ua = account->unidentifiedAccessKey();
     if (ua) {
-	ua = base64::encode(HMAC(base64::decode(ua), B32, "SHA256"));
+	ua = base64::encode(HMAC(ua, B32, "SHA256"));
     }
     device = account->device(1);
     return ([
