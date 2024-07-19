@@ -20,6 +20,9 @@
 
 register(CHAT_SERVER, "PUT", "/v1/profile/",
 	 "putProfile", argHeaderAuth(), argEntityJson());
+register(CHAT_SERVER, "GET", "/v1/profile/{}",
+	 "getProfile", argHeaderOptAuth(),
+	 argHeader("Unidentified-Access-Key"));
 register(CHAT_SERVER, "GET", "/v1/profile/{}/{}",
 	 "getVersionedProfile", argHeaderOptAuth(),
 	 argHeader("Unidentified-Access-Key"));
@@ -106,6 +109,26 @@ static void putProfile2(string accountId, mapping entity)
     profile->update(entity["name"], nil, entity["aboutEmoji"], entity["about"],
 		    entity["paymentAddress"],
 		    base64::decode(entity["commitment"]));
+}
+
+static int getProfile(string context, string uuid, Account account,
+		      Device device, string accessKey)
+{
+    /* XXX permitted? */
+    new Continuation("getProfile2", uuid)
+	->chain("respondJson", context, HTTP_OK)
+	->runNext();
+}
+
+static mapping getProfile2(string uuid)
+{
+    string accountId;
+    Account account;
+
+    accountId = uuid::decode(uuid);
+    account = ACCOUNT_SERVER->get(accountId);
+
+    return baseProfileResponse(account, uuid);
 }
 
 static int getVersionedProfile(string context, string uuid, string version,
