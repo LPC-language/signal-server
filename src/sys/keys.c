@@ -53,22 +53,50 @@ atomic void store(string id, int deviceId, mapping *preKeys)
 /*
  * take one key
  */
-mixed *take(string id, int deviceId)
+mixed *takeKey(string id, int deviceId)
 {
     mapping pkMap;
-    int *indices, keyId;
+    int *keyIds, keyId;
     string pubKey;
 
     pkMap = keys[id][deviceId];
-    indices = map_indices(pkMap);
-    if (sizeof(indices) == 0) {
+    keyIds = map_indices(pkMap);
+    if (sizeof(keyIds) == 0) {
 	return nil;
     }
-    keyId = indices[0];
+    keyId = keyIds[0];
     pubKey = pkMap[keyId];
     pkMap[keyId] = nil;
 
     return ({ keyId, pubKey });
+}
+
+/*
+ * take one key for every device
+ */
+atomic mixed **takeKeys(string id)
+{
+    mapping devMap, *devices, pkMap;
+    int *deviceIds, *keyIds, keyId, size, i;
+    mixed **result;
+    string pubKey;
+
+    devMap = keys[id];
+    deviceIds = map_indices(devMap);
+    devices = map_values(devMap);
+    result = ({ });
+    for (size = sizeof(devices), i = 0; i < size; i++) {
+	pkMap = devices[i];
+	keyIds = map_indices(pkMap);
+	if (sizeof(keyIds) != 0) {
+	    keyId = keyIds[0];
+	    pubKey = pkMap[keyId];
+	    pkMap[keyId] = nil;
+	    result += ({ ({ deviceIds[i], keyId, pubKey }) });
+	}
+    }
+
+    return result;
 }
 
 /*

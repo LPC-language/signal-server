@@ -22,14 +22,18 @@ register(CHAT_SERVER, "PUT", "/v2/keys/?identity=aci",
 	 "putKeysAci", argHeaderAuth(), argEntityJson());
 register(CHAT_SERVER, "PUT", "/v2/keys/?identity=pni",
 	 "putKeysPni", argHeaderAuth(), argEntityJson());
+register(CHAT_SERVER, "GET", "/v2/keys/{}/{}",
+	 "getKeys", argHeaderAuth(), argHeader("Unidentified-Access-Key"));
 
 # else
 
 # include <Continuation.h>
+# include "~HTTP/HttpResponse.h"
 # include "rest.h"
 # include "account.h"
 
 inherit RestServer;
+private inherit uuid "~/lib/uuid";
 
 
 /*
@@ -76,6 +80,62 @@ static void putKeysPni(string context, Account account, Device device,
 		     entity["preKeys"])
 	->add("respondJsonOK", context)
 	->runNext();
+}
+
+/*
+ * get keys from server
+ */
+static void getKeys(string context, string uuid, string deviceId,
+		    Account account, Device device, string accessKey)
+{
+    new Continuation("getKeys2", uuid::decode(uuid), deviceId)
+	->chain("respondJson", context, HTTP_OK)
+	->runNext();
+}
+
+/*
+ * get keys
+ */
+static mapping getKeys2(string id, string deviceId)
+{
+    Account account;
+    mapping results, *devices;
+    mixed *keys;
+    int i, size;
+    Device device;
+    mixed *signedPreKey;
+
+    account = ACCOUNT_SERVER->get(id);
+    results = ([ "identityKey" : account->identityKey() ]);
+
+    if (deviceId == "*") {
+	keys = KEYS_SERVER->takeKeys(id);
+    } else {
+	i = (int) deviceId;
+	keys = ({ ({ i }) + KEYS_SERVER->takeKey(id, i) });
+    }
+
+    size = sizeof(keys);
+    results["devices"] = devices = allocate(size);
+    for (i = 0; i < size; i++) {
+	device = account->device(keys[i][0]);
+	signedPreKey = device->signedPreKey();
+	devices[i] = ([
+	    "deviceId" : device->id(),
+	    "registrationId" : device->registrationId(),
+	    "signedPreKey" : ([
+		"keyId" : signedPreKey[0],
+		"publicKey" : signedPreKey[1],
+		"signature" : signedPreKey[2]
+	    ]),
+	    "preKey" : ([
+		"keyId" : keys[i][1],
+		"publicKey" : keys[i][2]
+	    ])
+	]);
+    }
+
+    return results;
 }
 
 # endif
