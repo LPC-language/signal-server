@@ -24,3 +24,4 @@
 # define PNI_SERVER		"/usr/MsgServer/sys/pni"
 # define KEYS_SERVER		"/usr/MsgServer/sys/keys"
 # define PROFILE_SERVER		"/usr/MsgServer/sys/profiles"
+# define ONLINE_REGISTRY	"/usr/MsgServer/sys/online"

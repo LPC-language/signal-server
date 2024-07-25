@@ -40,6 +40,7 @@ private inherit base64 "/lib/util/base64";
 private inherit json "/lib/util/json";
 private inherit "~/lib/proto";
 private inherit "/lib/util/random";
+private inherit uuid "~/lib/uuid";
 
 
 private mapping outgoing;	/* context : callback */
@@ -66,7 +67,8 @@ static int getWebsocket(string context, string upgrade, string connection,
 static int getWebsocketLogin(string context, string param, string upgrade,
 			     string connection, string key, string version)
 {
-    string login, password;
+    string login, password, id;
+    int deviceId;
 
     if (sscanf(param, "?login=%s&password=%s", login, password) != 2) {
 	return respond(context, HTTP_BAD_REQUEST, nil, nil);
@@ -74,18 +76,48 @@ static int getWebsocketLogin(string context, string param, string upgrade,
 
     if (upgrade == "websocket" && connection == "Upgrade" && key &&
 	version == "13") {
-	return upgradeToWebSocket("chat", key, login, password);
+	id = login;
+	deviceId = 1;
+	sscanf(id, "%s.%d", id, deviceId);
+	id = uuid::decode(id);
+	new Continuation("getWebsocketLogin2", id, deviceId, password)
+	    ->chain("getWebsocketLogin3", context, key, login, password,
+		    id, deviceId)
+	    ->runNext();
     } else {
 	return respond(context, HTTP_BAD_REQUEST, nil, nil);
+    }
+}
+
+static int getWebsocketLogin2(string id, int deviceId, string password)
+{
+    Account account;
+    Device device;
+
+    account = ACCOUNT_SERVER->get(id);
+    return (account &&
+	    (device=account->device(deviceId)) &&
+	     device->verifyPassword(password));
+}
+
+static void getWebsocketLogin3(string context, string key, string login,
+			       string password, string id, int deviceId,
+			       int success)
+{
+    if (success) {
+	upgradeToWebSocket("chat", key, login, password);
+	ONLINE_REGISTRY->register(id, deviceId, this_object());
+    } else {
+	respond(context, HTTP_UNAUTHORIZED, nil, nil);
     }
 }
 
 /*
  * send a WebSocket request
  */
-static void chatSendRequest(string verb, string path, StringBuffer body,
-			    mapping extraHeaders, Continuation cont,
-			    varargs mixed arguments...)
+void chatSendRequest(string verb, string path, StringBuffer body,
+		     mapping extraHeaders, Continuation cont,
+		     varargs mixed arguments...)
 {
     StringBuffer request, chunk;
     string context, *indices;

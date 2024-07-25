@@ -16,36 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# ifdef REGISTER
+# include <KVstore.h>
+
+inherit KVnode;
+
 
 /*
- * register REST API endpoints
+ * path of this node
  */
+static string nodePath()
+{
+    return "/usr/MsgServer/obj/kvnode_obj";
+}
 
-# include "chat/Registration.c"
-# include "chat/Keys.c"
-# include "chat/Accounts.c"
-# include "chat/Websocket.c"
-# include "chat/Certificate.c"
-# include "chat/Config.c"
-# include "chat/Profile.c"
-# include "chat/Backup.c"
-# include "chat/Storage.c"
-# include "chat/Directory.c"
-# include "chat/Messages.c"
-
-# else
-
-inherit "chat/Registration";
-inherit "chat/Keys";
-inherit "chat/Accounts";
-inherit "chat/Websocket";
-inherit "chat/Certificate";
-inherit "chat/Config";
-inherit "chat/Profile";
-inherit "chat/Backup";
-inherit "chat/Storage";
-inherit "chat/Directory";
-inherit "chat/Messages";
-
-# endif
+/*
+ * ({ obj })
+ */
+static mixed keyValue(string key, mixed value)
+{
+    return value[0];
+}

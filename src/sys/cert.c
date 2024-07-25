@@ -57,7 +57,7 @@ string generate(Account account, int deviceId, varargs string phoneNumber)
     time += CERTIFICATE_DURATION;
 
     str = "\20" + protoInt(deviceId) +
-	  "\31" + protoTime(time, mtime) +
+	  "\31" + protoFixedTime(time, mtime) +
 	  "\42" + protoString(base64::decode(account->identityKey())) +
 	  "\52" + protoString(serverCertificate) +
 	  "\62" + protoString(uuid::encode(account->id()));

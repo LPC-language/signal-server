@@ -58,7 +58,7 @@ static string protoAsn(string value)
     while (len != 1) {
 	c[0] = 0x80 | (value[len - 1] & 0x7f);
 	str += c;
-	value = asn_rshift(value, 7);
+	value = asn_rshift("\0" + value, 7);
 	len = strlen(value);
     }
 
@@ -76,14 +76,32 @@ static string protoFixed64(string str)
 /*
  * protobuf-encode time, wireType = 1
  */
-static string protoTime(int time, float mtime)
+static string protoFixedTime(int time, float mtime)
 {
     string str;
 
+    /*
+     * handle the case where integers are 32 bits
+     */
     str = asn::reverse(asn_add(asn_mult("\0" + asn::encode(time), "\x03\xe8",
 					ASN64),
 			       asn::encode((int) (mtime * 1000.0)), ASN64));
     return protoFixed64(str);
+}
+
+/*
+ * protobuf-encode time, wireType = 0
+ */
+static string protoAsnTime(int time, float mtime)
+{
+    string str;
+
+    /*
+     * handle the case where integers are 32 bits
+     */
+    str = asn_add(asn_mult("\0" + asn::encode(time), "\x03\xe8", ASN64),
+		  asn::encode((int) (mtime * 1000.0)), ASN64);
+    return protoAsn(str);
 }
 
 /*
@@ -219,14 +237,36 @@ static mixed *parseFixed64(StringBuffer chunk, string buf, int offset)
 }
 
 /*
- * parse time
+ * parse fixed64 time
  */
-static mixed *parseTime(StringBuffer chunk, string buf, int offset)
+static mixed *parseFixedTime(StringBuffer chunk, string buf, int offset)
 {
     string str;
 
+    /*
+     * handle the case where integers are 32 bits
+     */
     ({ str, buf, offset }) = parseFixed64(chunk, buf, offset);
     str = asn::reverse(str);
+    return ({
+	asn::decode(asn_div(str, "\x03\xe8", ASN64)),
+	(float) asn::decode(asn_mod(str, "\x03\xe8")) / 1000.0,
+	buf,
+	offset
+    });
+}
+
+/*
+ * parse ASN time
+ */
+static mixed *parseAsnTime(StringBuffer chunk, string buf, int offset)
+{
+    string str;
+
+    /*
+     * handle the case where integers are 32 bits
+     */
+    ({ str, buf, offset }) = parseAsn(chunk, buf, offset);
     return ({
 	asn::decode(asn_div(str, "\x03\xe8", ASN64)),
 	(float) asn::decode(asn_mod(str, "\x03\xe8")) / 1000.0,

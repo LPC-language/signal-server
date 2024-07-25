@@ -16,36 +16,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# ifdef REGISTER
+# include <KVstore.h>
+
+inherit KVstore;
+
 
 /*
- * register REST API endpoints
+ * KVstore with object values
  */
+static void create(int maxSize)
+{
+    ::create(maxSize, nil, "/usr/MsgServer/obj/kvnode_obj");
+}
 
-# include "chat/Registration.c"
-# include "chat/Keys.c"
-# include "chat/Accounts.c"
-# include "chat/Websocket.c"
-# include "chat/Certificate.c"
-# include "chat/Config.c"
-# include "chat/Profile.c"
-# include "chat/Backup.c"
-# include "chat/Storage.c"
-# include "chat/Directory.c"
-# include "chat/Messages.c"
+/*
+ * set K/V
+ */
+void set(string key, object value)
+{
+    ::set(key, ({ value }));
+}
 
-# else
+/*
+ * add K/V
+ */
+void add(string key, object value)
+{
+    ::add(key, ({ value }));
+}
 
-inherit "chat/Registration";
-inherit "chat/Keys";
-inherit "chat/Accounts";
-inherit "chat/Websocket";
-inherit "chat/Certificate";
-inherit "chat/Config";
-inherit "chat/Profile";
-inherit "chat/Backup";
-inherit "chat/Storage";
-inherit "chat/Directory";
-inherit "chat/Messages";
-
-# endif
+/*
+ * change K/V
+ */
+void change(string key, object value)
+{
+    ::change(key, ({ value }));
+}

@@ -16,36 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# ifdef REGISTER
+
+# include "KVstoreObj.h"
+
+
+object endpoints;	/* connected WebSocket endpoints */
 
 /*
- * register REST API endpoints
+ * initialize online registry
  */
+static void create()
+{
+    endpoints = new KVstoreObj(1000);
+}
 
-# include "chat/Registration.c"
-# include "chat/Keys.c"
-# include "chat/Accounts.c"
-# include "chat/Websocket.c"
-# include "chat/Certificate.c"
-# include "chat/Config.c"
-# include "chat/Profile.c"
-# include "chat/Backup.c"
-# include "chat/Storage.c"
-# include "chat/Directory.c"
-# include "chat/Messages.c"
+/*
+ * register WebSocket endpoint
+ */
+void register(string id, int deviceId, object endpoint)
+{
+    endpoints[deviceId + id] = endpoint;
+}
 
-# else
-
-inherit "chat/Registration";
-inherit "chat/Keys";
-inherit "chat/Accounts";
-inherit "chat/Websocket";
-inherit "chat/Certificate";
-inherit "chat/Config";
-inherit "chat/Profile";
-inherit "chat/Backup";
-inherit "chat/Storage";
-inherit "chat/Directory";
-inherit "chat/Messages";
-
-# endif
+/*
+ * get any active WebSocket endpoint
+ */
+object present(string id, int deviceId)
+{
+    return endpoints[deviceId + id];
+}

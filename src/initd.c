@@ -23,9 +23,12 @@ static void create()
 {
     compile_object("api/lib/TlsClientSession");
     compile_object("lib/KVstoreExp");
+    compile_object("lib/KVstoreObj");
     compile_object("lib/Device");
     compile_object("lib/Account");
     compile_object("lib/Profile");
+    compile_object("lib/Timestamp");
+    compile_object("lib/Envelope");
     compile_object("lib/ShoHmacSha256");
     compile_object("lib/ShoSha256");
     compile_object("lib/KeyPair");
@@ -39,6 +42,7 @@ static void create()
     compile_object("obj/oneshot");
     compile_object("obj/fcm_sender");
     compile_object("obj/kvnode_exp");
+    compile_object("obj/kvnode_obj");
     compile_object("sys/tls_server");
     compile_object("sys/rest_api");
     compile_object("sys/params");
@@ -50,5 +54,7 @@ static void create()
     compile_object("sys/pni");
     compile_object("sys/keys");
     compile_object("sys/profiles");
+    compile_object("sys/online");
+    compile_object("sys/messages");
     compile_object("services/obj/server");
 }
