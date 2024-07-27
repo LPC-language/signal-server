@@ -202,6 +202,9 @@ static mixed *parseAsn(StringBuffer chunk, string buf, int offset)
 	shift += 7;
     } while (c & 0x80);
 
+    if (value[0] == '\0' && strlen(value) != 1) {
+	value = value[1 ..];
+    }
     return ({ value, buf, offset });
 }
 

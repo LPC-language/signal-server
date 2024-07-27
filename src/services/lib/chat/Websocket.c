@@ -164,8 +164,8 @@ void chatSendRequest(string verb, string path, StringBuffer body,
  */
 static void chatReceiveResponse(StringBuffer chunk)
 {
-    int c, offset;
-    string buf, id, code, message, headers, header;
+    int c, offset, code;
+    string buf, id, message, headers, header;
     StringBuffer entity;
     HttpResponse response;
     mixed *handle;
@@ -175,7 +175,7 @@ static void chatReceiveResponse(StringBuffer chunk)
 	error("WebSocketResponseMessage.id expected");
     }
     ({ id, buf, offset }) = parseAsn(chunk, buf, offset);
-    ({ c, buf, offset }) = parseByte(chunk, nil, 0);
+    ({ c, buf, offset }) = parseByte(chunk, buf, offset);
     if (c != 020) {
 	error("WebSocketResponseMessage.status expected");
     }
@@ -221,7 +221,7 @@ static void chatReceiveResponse(StringBuffer chunk)
     }
 
     response = new HttpResponse(1.1, code, message);
-    if (strlen(headers) != 0) {
+    if (headers) {
 	response->setHeaders(new RemoteHttpFields(headers));
     }
 
