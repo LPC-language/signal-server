@@ -139,7 +139,7 @@ void processEnvelopes(string id, int deviceId, object endpoint)
     mapping mbox;
 
     mbox = mboxes[deviceId + id];
-    if (sizeof(mbox[QUEUE]) != 0 && !mbox[ENDPOINT]) {
+    if (mbox && sizeof(mbox[QUEUE]) != 0 && !mbox[ENDPOINT]) {
 	mbox[ENDPOINT] = endpoint;
 	call_out("deliver", 0, id, deviceId);
     }

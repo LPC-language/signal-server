@@ -22,6 +22,8 @@ register(CHAT_SERVER, "PUT", "/v2/keys/?identity=aci",
 	 "putKeysAci", argHeaderAuth(), argEntityJson());
 register(CHAT_SERVER, "PUT", "/v2/keys/?identity=pni",
 	 "putKeysPni", argHeaderAuth(), argEntityJson());
+register(CHAT_SERVER, "PUT", "/v2/keys/signed?identity=aci",
+	 "putKeysSignedAci", argHeaderAuth(), argEntityJson());
 register(CHAT_SERVER, "GET", "/v2/keys/{}/{}",
 	 "getKeys", argHeaderAuth(), argHeader("Unidentified-Access-Key"));
 
@@ -80,6 +82,19 @@ static void putKeysPni(string context, Account account, Device device,
 		     entity["preKeys"])
 	->add("respondJsonOK", context)
 	->runNext();
+}
+
+/*
+ * update signed key
+ */
+static void putKeysSignedAci(string context, Account account, Device device,
+			     mapping entity)
+{
+    mapping signedPreKey;
+
+    device->updateSignedPreKey(entity["keyId"], entity["publicKey"],
+			       entity["signature"]);
+    respond(context, HTTP_OK, nil, nil, nil);
 }
 
 /*
