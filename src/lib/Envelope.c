@@ -64,8 +64,10 @@ StringBuffer transport()
     buffer->append(protoAsnTime(timestamp->time(), timestamp->mtime()));
     buffer->append("\070");
     buffer->append(protoInt(sourceDeviceId));
-    buffer->append("\102");
-    buffer->append(protoStrbuf(content->buffer()));
+    if (content) {
+	buffer->append("\102");
+	buffer->append(protoStrbuf(content->buffer()));
+    }
     buffer->append("\112");
     buffer->append(protoString(uuid::encode(guid)));
     buffer->append("\120");

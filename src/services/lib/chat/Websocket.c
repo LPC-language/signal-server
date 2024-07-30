@@ -33,15 +33,16 @@ register(CHAT_SERVER, "GET", "/v1/websocket/{}",
 # include "~HTTP/HttpField.h"
 # include "rest.h"
 # include "account.h"
+# include "messages.h"
 # include <type.h>
 
 inherit RestServer;
 private inherit base64 "/lib/util/base64";
 private inherit json "/lib/util/json";
+private inherit asn "/lib/util/asn";
 private inherit "~/lib/proto";
 private inherit "/lib/util/random";
 private inherit uuid "~/lib/uuid";
-
 
 private mapping outgoing;	/* context : callback */
 
@@ -107,6 +108,7 @@ static void getWebsocketLogin3(string context, string key, string login,
     if (success) {
 	upgradeToWebSocket("chat", key, login, password);
 	ONLINE_REGISTRY->register(id, deviceId, this_object());
+	MESSAGE_SERVER->processEnvelopes(id, deviceId, this_object());
     } else {
 	respond(context, HTTP_UNAUTHORIZED, nil, nil);
     }
@@ -175,6 +177,7 @@ static void chatReceiveResponse(StringBuffer chunk)
 	error("WebSocketResponseMessage.id expected");
     }
     ({ id, buf, offset }) = parseAsn(chunk, buf, offset);
+    id = asn::unsignedExtend(id, 8);
     ({ c, buf, offset }) = parseByte(chunk, buf, offset);
     if (c != 020) {
 	error("WebSocketResponseMessage.status expected");
@@ -249,8 +252,6 @@ static void chatReceiveResponse(StringBuffer chunk)
 	}
 
 	handle[0]->runNext(response->code(), args...);
-    } else {
-	error("Unknown response");
     }
 }
 

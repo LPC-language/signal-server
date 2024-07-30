@@ -25,10 +25,12 @@ register(CHAT_SERVER, "PUT", "/v1/messages/{}",
 # else
 
 # include <String.h>
+# include "~HTTP/HttpResponse.h"
 # include "Timestamp.h"
 # include "rest.h"
 # include "account.h"
 # include "messages.h"
+# include "fcm.h"
 
 inherit RestServer;
 private inherit base64 "/lib/util/base64";
@@ -42,29 +44,44 @@ static void putMessages(string context, string uuid, Account account,
 
     sscanf(uuid, "%s?story=%s", uuid, story);
 
-    call_out("putMessages2", 0,
+    call_out("putMessages2", 0, context,
 	     ACCOUNT_SERVER->get(uuid::decode(entity["destination"])),
 	     account->id(), device->id(), entity["messages"],
 	     new Timestamp(entity["timestamp"]), entity["urgent"]);
 }
 
-static void putMessages2(Account account, string sourceId, int sourceDeviceId,
-			 mapping *messages, Timestamp timestamp, int urgent)
+static void putMessages2(string context, Account account, string sourceId,
+			 int sourceDeviceId, mapping *messages,
+			 Timestamp timestamp, int urgent)
 {
     string destinationId, content;
-    int size, i;
-    mapping message;
+    int size, i, deviceId;
+    mapping online, message;
+    object endpoint;
 
     destinationId = account->id();
+    online = ([ ]);
     for (size = sizeof(messages), i = 0; i < size; i++) {
 	message = messages[i];
+	deviceId = message["destinationDeviceId"];
+	endpoint = online[deviceId];
+	if (!endpoint) {
+	    endpoint = ONLINE_REGISTRY->present(destinationId, deviceId);
+	    if (endpoint) {
+		online[deviceId] = endpoint;
+	    } else {
+		FCM_RELAY->sendNotification(account->device(deviceId)->gcmId(),
+					    urgent);
+	    }
+	}
 	content = base64::decode(message["content"]);
-	MESSAGE_SERVER->send(account,
-			     account->device(message["destinationDeviceId"]),
+	MESSAGE_SERVER->send(destinationId, deviceId, endpoint,
 			     new Envelope(sourceId, sourceDeviceId,
 					  message["type"], new String(content),
 					  timestamp, destinationId, urgent));
     }
+
+    respondJson(context, HTTP_OK, ([ "needsSync" : FALSE ]));
 }
 
 # endif
