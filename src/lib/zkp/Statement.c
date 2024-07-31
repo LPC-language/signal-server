@@ -1,5 +1,5 @@
 /*
- * This file is part of https://github.com/LPC-language/Signal-Server
+ * This file is part of https://github.com/LPC-language/signal-server
  * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -180,7 +180,7 @@ private RistrettoPoint *getPoints(mapping pointArgs)
 
 /*
  * See:
- * "A Graduate Cource in Applied Cryptography," Boneh and Shoup, section 19.5.3
+ * "A Graduate Course in Applied Cryptography," Boneh and Shoup, section 19.5.3
  */
 private RistrettoPoint *homomorphism(Scalar *g1, RistrettoPoint *points)
 {

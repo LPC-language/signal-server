@@ -1,5 +1,5 @@
 /*
- * This file is part of https://github.com/LPC-language/Signal-Server
+ * This file is part of https://github.com/LPC-language/signal-server
  * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
