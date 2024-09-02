@@ -1,7 +1,7 @@
 telnet_port	= ([ "localhost" : 8023 ]);
 					/* telnet port number */
 binary_port	= 8443;			/* binary port number */
-directory	= "/home/server/cloud/src";
+directory	= "cloud-server/src";	/* use absolute path when hotbooting! */
 					/* base directory */
 ed_tmpfile	= "../state/ed";	/* proto editor tmpfile */
 swap_file	= "../state/swap";	/* swap file */
@@ -12,14 +12,19 @@ static_chunk	= 64512;		/* static memory chunk */
 dynamic_chunk	= 261120;		/* dynamic memory chunk */
 dump_file	= "../state/snapshot";	/* snapshot file */
 dump_interval	= 86400;		/* snapshot rebuild interval */
-hotboot		= ({ "../bin/hydra",	/* hotboot binary */
-		     "../server.dgd",	/* hotboot config file */
-		     "../state/snapshot",
-		     "../state/snapshot.old" });
-modules		= ([ "../ext/jit.1.4" : "../ext/src/jit",
-		     "../ext/zlib.1.4" : "",
-		     "../ext/crypto.1.4" : "",
-		     "../ext/libsignal.1.4" : "" ]);
+hotboot		= ({
+		    "../../dgd/bin/dgd",
+		    "../../signal-server/server.dgd",
+		    "../state/snapshot",
+		    "../state/snapshot.old"
+		  });
+modules		= ([
+# if 0					/* enable for JIT compilation */
+		    "../../lpc-ext/jit.1.4" : "../../lpc-ext/src/jit",
+# endif
+		    "../../lpc-ext/crypto.1.4" : "",
+		    "../../lpc-ext/libsignal.1.4" : ""
+		  ]);
 
 typechecking	= 2;			/* global typechecking */
 include_file	= "/include/std.h";	/* standard include file */
