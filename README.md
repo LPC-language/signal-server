@@ -47,7 +47,7 @@ for now, with minimal changes made.
 
 ## Disclaimers
 
-This is alpha quality code.  You can send simple encrypted messages to other
+*This is alpha quality code*.  You can send simple encrypted messages to other
 users, and that's it.  However, the foundations are there for more advanced
 features, including support for Zero Knowledge Proofs.  A lot more could be
 implemented in just a month of development time.
@@ -103,7 +103,8 @@ all git repositories are checked out side by side.
     needed for FCM notifications, which are also used during the Android client
     registration process.  It will take a day or so to activate your account,
     so start with this.
-2.  Git checkout https://github.com/dworkin/dgd.git, and run `make install`
+2.  Git checkout https://github.com/dworkin/dgd.git, and run `make
+    DEFINES='-DEINDEX_TYPE="unsigned short" -DEINDEX_MAX=USHRT_MAX' install`
     in `dgd/src` to create `dgd/bin/dgd`.  Build requires a yacc-compatible
     parser generator such as bison or byacc.
 3.  Git checkout https://github.com/dworkin/lpc-ext.git and run `make crypto`
@@ -129,16 +130,12 @@ all git repositories are checked out side by side.
     `signal-android/app/src/main/res/raw/whisper.store` using an application
     like [Keystore Explorer](https://keystore-explorer.org/).
 10. From https://console.firebase.google.com, create a Firebase project for
-    `signal-server` using your activated Google Cloud account.  Create an app
-    (the Android app) within the project.  From "Project Settings", download
-    `google-services.json` for the app and update
+    `signal-server` using your activated Google Cloud account.  Add an Android
+    app to the project.  Download `google-services.json` for the app and update
     `signal-android/app/src/main/res/values/firebase_messaging.xml`
-    accordingly.
-11. From https://console.cloud.google.com, navigate to "IAM & Admin/Service
-    Accounts" and for
-    "firebase-adminsdk-xyz@project-name.iam.gserviceaccount.com", choose
-    "Actions/Manage keys".  Add a new key with "ADD KEY/Create new key" and
-    store the downloaded JSON data in
+    accordingly (leave the "default_web_client_id" line as it is).
+11. Go to "Project Settings/Service accounts", generate a new private key for
+    the Firebase Admin SDK and save the downloaded JSON data as
     `signal-server/src/config/fcm-key/service-account.json`.  It should look
     like this:
 
@@ -161,7 +158,7 @@ all git repositories are checked out side by side.
     contents to `android/defaultConfig/ZKGROUP_SERVER_PUBLIC_PARAMS` in
     `signal-android/app/build.gradle`.
 13. Build the Android client.
-14. Run the Android client.  Register with the server, using any registration
-    code when asked (the server will not send one through SMS) and skipping the
-    creation of a PIN code.  You should now be able to send end-to-end
-    encrypted messages to other registered clients.
+14. Run the Android client.  Register with the server, using any verification
+    code when asked (the server will not send one through SMS) and choose to
+    skip and then disable a PIN code.  You should now be able to send
+    end-to-end encrypted messages to other registered clients.

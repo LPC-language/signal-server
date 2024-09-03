@@ -37,5 +37,5 @@ create		= "_F_create";		/* low-level create function */
 users		= 65535;		/* max # of users */
 editors		= 10;			/* max # of editor sessions */
 objects		= 65535;		/* max # of objects */
-call_outs	= 65535;		/* max # of call_outs */
+call_outs	= 65534;		/* max # of call_outs */
 array_size	= 32767;		/* max array size */
