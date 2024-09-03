@@ -157,8 +157,14 @@ all git repositories are checked out side by side.
     create `signal-server/src/config/ZKGROUP_SERVER_PUBLIC_PARAMS`.  Copy the
     contents to `android/defaultConfig/ZKGROUP_SERVER_PUBLIC_PARAMS` in
     `signal-android/app/build.gradle`.
-13. Build the Android client.
-14. Run the Android client.  Register with the server, using any verification
+13. `signal-server` listens on port 8443.  Running the server as root and
+    listening on port 443 is not recommended, so redirect port 443 to 8443 on
+    the host with a command like
+
+        iptables -t nat -A PREROUTING -d 192.168.0.1 -p tcp --dport 443 -j DNAT --to-destination 192.168.0.1:8443
+
+14. Build the Android client.
+15. Run the Android client.  Register with the server, using any verification
     code when asked (the server will not send one through SMS) and choose to
     skip and then disable a PIN code.  You should now be able to send
     end-to-end encrypted messages to other registered clients.
