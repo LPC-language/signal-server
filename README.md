@@ -121,7 +121,8 @@ all git repositories are checked out side by side.
     https://github.com/LPC-language/signal-server.git and run
     `ln -s ../../../signal-server/src MsgServer` in `cloud-server/src/usr`.
 7.  Git checkout https://github.com/LPC-language/signal-android.git and
-    install Android Studio to build it later.
+    install [Android Studio](https://developer.android.com/studio) to build it
+    later.
 8.  Copy `signal-server/src/config/services.example` to
     `signal-server/src/config/services`, and change the domain names in that
     file and in `signal-android/app/build.gradle`.  Also change static IP
@@ -134,7 +135,7 @@ all git repositories are checked out side by side.
     `signal-server` using your activated Google Cloud account.  Add an Android
     app to the project.  Download `google-services.json` for the app and update
     `signal-android/app/src/main/res/values/firebase_messaging.xml`
-    accordingly (leave the "default_web_client_id" line as it is).
+    accordingly (leave the "default_web_client_id" line as is).
 11. Go to "Project Settings/Service accounts", generate a new private key for
     the Firebase Admin SDK and save the downloaded JSON data as
     `signal-server/src/config/fcm-key/service-account.json`.  It should look
