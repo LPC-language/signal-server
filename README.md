@@ -214,13 +214,13 @@ Commands available to the new user include:
     that inherit from it.  `upgrade -a` can be used to perform the upgrade
     atomically, so that nothing will change if any object failed to compile.
 -   `snapshot`: create a database snapshot of the current state, `snapshot -f`
-    to create a full snapshot which does not depend on older snapshots
+    to create a full snapshot which does not depend on the previous snapshot
 -   `reboot`: create a snapshot of the current state and halt the server,
     permitting it to be restarted with the snapshot later
 -   `hotboot`: create a snapshot and execute a new version of DGD directly,
     permitting DGD to be upgraded without downtime
 -   `halt`: halt the server without creating a snapshot
--   'cd', `pwd`, `ls`, `cp`, `rm`, `ed`: similar to Unix shell commands
+-   `cd`, `pwd`, `ls`, `cp`, `rm`, `ed`: similar to Unix shell commands
 
 Snapshots are created in `cloud-server/state`.  The most recent snapshot
 is called `snapshot`, the previous snapshot is `snapshot.old`, and older
