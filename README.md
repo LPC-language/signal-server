@@ -6,10 +6,11 @@ Web Services and Google Cloud Platform, it is also expensive to run.  This
 makes it a poor choice for a private messenger server for e.g. a family or a
 company.
 
-Now there is a new option: `signal-server` rewritten from scratch in LPC.  The
-reimplementation runs on a single host and stores all data in its internal
-database.  The LPC platform can be either [DGD](https://github.com/dworkin/dgd)
-or [Hydra](https://www.dworkin.nl/hydra); on the latter, it will scale with the
+Now there is a new option: `signal-server` rewritten from scratch in
+[LPC](https://en.wikipedia.org/wiki/LPC).  The reimplementation runs on a
+single host and stores all data in its internal database.  The LPC platform can
+be either [DGD](https://github.com/dworkin/dgd) or
+[Hydra](https://www.dworkin.nl/hydra); on the latter, it will scale with the
 number of CPU cores on the host.
 
 LPC is a simple language permitting rapid development.  Getting the
@@ -111,8 +112,8 @@ all git repositories are checked out side by side.
     in `lpc-ext/src` to build the crypto extension module.  Requires OpenSSL
     development.
 4.  Optionally, run `make jit` in `lpc-ext/src` to build the JIT compiler
-    extension module.  Requires clang to be installed both for building and for
-    running the extension module.
+    extension module.  Requires [clang](https://clang.llvm.org) to be installed
+    both for building and for running the extension module.
 5.  Git checkout https://github.com/LPC-language/libsignal.git and run
     `make` in `libsignal/src` to build the libsignal extension module.
     Requires OpenSSL development.
@@ -157,14 +158,73 @@ all git repositories are checked out side by side.
     create `signal-server/src/config/ZKGROUP_SERVER_PUBLIC_PARAMS`.  Copy the
     contents to `android/defaultConfig/ZKGROUP_SERVER_PUBLIC_PARAMS` in
     `signal-android/app/build.gradle`.
-13. `signal-server` listens on port 8443.  Running the server as root and
-    listening on port 443 is not recommended, so redirect port 443 to 8443 on
-    the host with a command like
+13. `signal-server` listens on port 8443.  Listening on port 443 would require
+    running the server as root and is not recommended, so redirect port 443 to
+    8443 with a command like
 
-        iptables -t nat -A PREROUTING -d 192.168.0.1 -p tcp --dport 443 -j DNAT --to-destination 192.168.0.1:8443
+        sudo iptables -t nat -A PREROUTING -d 192.168.0.1 -p tcp --dport 443 -j DNAT --to-destination 192.168.0.1:8443
 
 14. Build the Android client.
 15. Run the Android client.  Register with the server, using any verification
     code when asked (the server will not send one through SMS) and choose to
     skip and then disable a PIN code.  You should now be able to send
     end-to-end encrypted messages to other registered clients.
+
+## Running the server
+
+DGD was originally made for
+[MUDs](https://en.wikipedia.org/wiki/Multi-user_dungeon), and some of the
+architecture still reflects this.  With telnet, one can connect to a kind
+of "shell" built into the server, giving low-level control to the user.  This
+is required for development, to compile and upgrade objects inside a
+running server.
+
+To get started, you login as admin, a user with all permissions but a
+restricted set of commands.  Create a new user, which will be able to use
+an extended shell, including commands to compile, destruct and upgrade objects,
+create a database snapshot, reboot the server, and even reboot into a new
+version of DGD without taking down the server.  The example below shows how to
+create a new user "dworkin":
+
+    > telnet localhost 8023
+    Trying 127.0.0.1...
+    Connected to localhost.
+    Escape character is '^]'.
+
+    Welcome to the Cloud Server.
+
+    After login, the following commands are available:
+     - users                see who is logged on
+     - say, ', emote, :     communication
+     - quit                 leave the mud
+
+    login: admin
+    Pick a new password:
+    Retype new password:
+    Password changed.
+    # grant dworkin access
+    # grant dworkin / full
+    # quit
+
+Commands available to the new user include:
+
+-   `compile /path/to/object.c`: compile, or re-compile, an LPC source file
+-   `destruct /path/to/object`: destruct an object
+-   `upgrade /path/to/object.c`: recompile an object, and all other objects
+    that inherit from it.  `upgrade -a` can be used to perform the upgrade
+    atomically, so that nothing will change if any object failed to compile.
+-   `snapshot`: create a database snapshot of the current state, `snapshot -f`
+    to create a full snapshot which does not depend on older snapshots
+-   `reboot`: create a snapshot of the current state and halt the server,
+    permitting it to be restarted with the snapshot later
+-   `hotboot`: create a snapshot and execute a new version of DGD directly,
+    permitting DGD to be upgraded without downtime
+-   `halt`: halt the server without creating a snapshot
+-   'cd', `pwd`, `ls`, `cp`, `rm`, `ed`: similar to Unix shell commands
+
+Snapshots are created in `cloud-server/state`.  The most recent snapshot
+is called `snapshot`, the previous snapshot is `snapshot.old`, and older
+snapshots are not kept by DGD (but could be preserved by an external script).
+DGD can be started with a snapshot by adding it to the command line, typically
+`dgd/bin/dgd signal-server/server.dgd cloud-server/state/snapshot
+cloud-server/state/snapshot.old`.
