@@ -79,7 +79,7 @@ credentials for the storage service is however implemented.
 enclave.  `signal-android` was modified to support this.
 
 The use of server-side secure enclaves was
-[introduced](https://signal.org/blog/secure-value-recovery/) to store
+[introduced](https://signal.org/blog/private-contact-discovery/) to store
 private data securely, so that the server operator would not have access to
 the data or be able to hand it over, even when compelled by force of law.
 
