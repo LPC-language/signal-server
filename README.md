@@ -129,8 +129,9 @@ all git repositories are checked out side by side.
     numbers in `signal-android/app/static-ips.gradle`.
 9.  Generate a self-signed certificate for `*.yourdomain.com`, store it as
     `signal-server/src/config/cert/server.{pem,key}` and add the certificate to
-    `signal-android/app/src/main/res/raw/whisper.store` using an application
-    like [Keystore Explorer](https://keystore-explorer.org/).
+    `signal-android/app/src/main/res/raw/whisper.store` (password: "whisper")
+    using an application like
+    [Keystore Explorer](https://keystore-explorer.org/).
 10. From https://console.firebase.google.com, create a Firebase project for
     `signal-server` using your activated Google Cloud account.  Add an Android
     app to the project.  Download `google-services.json` for the app and update
@@ -180,12 +181,12 @@ of "shell" built into the server, giving low-level control to the user.  This
 is required for development, to compile and upgrade objects inside a
 running server.
 
-To get started, you login as admin, a user with all permissions but a
-restricted set of commands.  Create a new user, which will be able to use
-an extended shell, including commands to compile, destruct and upgrade objects,
-create a database snapshot, reboot the server, and even reboot into a new
-version of DGD without taking down the server.  The example below shows how to
-create a new user "dworkin":
+To get started, login as admin, a user with all permissions but a restricted
+set of commands.  Create a new user, which will be able to use an extended
+shell, including commands to compile, destruct and upgrade objects, create a
+database snapshot, reboot the server, and even reboot into a new version of
+DGD without taking down the server.  The example below shows how to create a
+new user "dworkin":
 
     > telnet localhost 8023
     Trying 127.0.0.1...
