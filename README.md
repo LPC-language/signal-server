@@ -172,6 +172,14 @@ all git repositories are checked out side by side.
     skip and then disable a PIN code.  You should now be able to send
     end-to-end encrypted messages to other registered clients.
 
+### Installing with Hydra
+
+A free, 32 bit binary of Hydra can be downloaded
+[here](https://download.dworkin.nl/hydra).  To use it for `signal-server`,
+running 32 bit binaries must be enabled on the host, a 32 bit compiler must
+be installed, and all modules (`crypto`, `libsignal`, optionally `jit`) must
+be compiled as 32 bit binaries, using something like `make CC='cc -m32'`.
+
 ## Running the server
 
 DGD was originally made for
