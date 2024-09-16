@@ -20,7 +20,7 @@
 
 # define RestServer		object "/usr/MsgServer/lib/rest/Server"
 # define RestClient		object "/usr/MsgServer/lib/rest/Client"
-# define RestTlsClientSession	object "/usr/MsgServer/api/lib/TlsClientSession"
+# define RestTlsClientSession	object "/usr/MsgServer/lib/TlsClientSession"
 
 # define ARG_ENTITY		1
 # define ARG_ENTITY_JSON	2

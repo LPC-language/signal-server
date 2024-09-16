@@ -21,7 +21,7 @@
  */
 static void create()
 {
-    compile_object("api/lib/TlsClientSession");
+    compile_object("lib/TlsClientSession");
     compile_object("lib/KVstoreExp");
     compile_object("lib/KVstoreObj");
     compile_object("lib/Device");

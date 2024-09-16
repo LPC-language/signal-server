@@ -42,6 +42,10 @@ private StringBuffer chunks;	/* collected chunks */
  */
 static void create(string address, int port, string function)
 {
+    if (status(OBJECT_PATH(RestTlsClientSession), O_INDEX) == nil) {
+	compile_object(OBJECT_PATH(RestTlsClientSession));
+    }
+
     connection = clone_object(HTTP1_TLS_CLIENT, this_object(), address, port,
 			      address, nil, nil,
 			      OBJECT_PATH(RestTlsClientSession));
