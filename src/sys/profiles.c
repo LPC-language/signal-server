@@ -28,7 +28,7 @@ object profiles;	/* id : profile */
  */
 static void create()
 {
-    profiles = new KVstore(100);
+    profiles = new KVstore(111);
 }
 
 Profile get(string id, string version)

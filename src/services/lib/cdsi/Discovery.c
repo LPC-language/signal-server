@@ -37,6 +37,7 @@ inherit RestServer;
 private inherit "/lib/util/ascii";
 private inherit base64 "/lib/util/base64";
 private inherit "~/lib/proto";
+private inherit "~/lib/phone";
 
 
 # define STATE_INIT		0
@@ -184,23 +185,6 @@ private void sendClientResponse(string *results)
 }
 
 /*
- * convert phone number from 8-byte bigendian to "+15551234567" string
- */
-private string convertPhoneNumber(string str)
-{
-    string num, digit;
-
-    for (num = "", str = "\0" + str; str != "\0";
-	 str = asn_div(str, "\x0a", str)) {
-	digit = asn_mod(str, "\x0a");
-	digit[0] += '0';
-	num = digit + num;
-    }
-
-    return "+" + num;
-}
-
-/*
  * check a batch of phone numbers
  */
 static void cdsiBatch(string *numbers, string *results, int offset)
@@ -213,7 +197,7 @@ static void cdsiBatch(string *numbers, string *results, int offset)
 	size = offset + BATCH_SIZE;
     }
     for (i = offset; i < size; i++) {
-	account = ACCOUNT_SERVER->getByNumber(convertPhoneNumber(numbers[i]));
+	account = ACCOUNT_SERVER->getByNumber(numToPhone(numbers[i]));
 	results[i] = numbers[i] + ((account) ?
 				    account->pni() + account->id() :
 				    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" +

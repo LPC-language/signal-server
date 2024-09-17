@@ -21,18 +21,21 @@
 # include "services.h"
 
 private inherit "/lib/util/random";
+private inherit "~/lib/phone";
 
 
 object pni;	/* phoneNumber : Id */
 object ipn;	/* id : phoneNumber */
+int version;	/* data version */
 
 /*
  * initialize PNI server
  */
 static void create()
 {
-    pni = new KVstore(100);
-    ipn = new KVstore(100);
+    pni = new KVstore(250);
+    ipn = new KVstore(200);
+    version = 1;
 }
 
 /*
@@ -51,7 +54,7 @@ private atomic string add(string phoneNumber)
 	}
 	break;
     }
-    pni[phoneNumber] = id;
+    pni[phoneToNum(phoneNumber)] = id;
 
     return id;
 }
@@ -63,7 +66,10 @@ string getId(string phoneNumber)
 {
     string id;
 
-    id = pni[phoneNumber];
+    id = pni[phoneToNum(phoneNumber)];
+    if (!id && version == 0) {
+	id = pni[phoneNumber];
+    }
     return (id) ? id : add(phoneNumber);
 }
 

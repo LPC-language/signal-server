@@ -21,6 +21,7 @@
 
 private inherit "/lib/util/random";
 private inherit hex "/lib/util/hex";
+private inherit "~/lib/phone";
 
 
 # define DURATION	30 * 24 * 3600
@@ -33,8 +34,8 @@ object phoneIndex;	/* phoneNumber : sessionId */
  */
 static void create()
 {
-    sessions = new KVstoreExp(100, DURATION);
-    phoneIndex = new KVstoreExp(100, DURATION);
+    sessions = new KVstoreExp(200, DURATION);
+    phoneIndex = new KVstoreExp(250, DURATION);
 }
 
 /*
@@ -46,7 +47,7 @@ mixed *getSessionId(string phoneNumber)
 	string sessionId;
 	mapping session;
 
-	sessionId = phoneIndex[phoneNumber];
+	sessionId = phoneIndex[phoneToNum(phoneNumber)];
 	if (sessionId) {
 	    return ({ sessionId, sessions[sessionId] });
 	}
@@ -54,14 +55,17 @@ mixed *getSessionId(string phoneNumber)
 	session = ([ "phoneNumber" : phoneNumber ]);
 
 	for (;;) {
-	    sessionId = hex::format(random_string(16));
+	    sessionId = random_string(16);
 	    try {
 		sessions->add(sessionId, session);
 	    } catch (...) {
 		continue;
 	    }
+	    sessionId = hex::format(sessionId);
 	    session["id"] = sessionId;
-	    return ({ phoneIndex[phoneNumber] = sessionId, session });
+	    return ({
+		phoneIndex[phoneToNum(phoneNumber)] = sessionId, session
+	    });
 	}
     }
 }
@@ -72,7 +76,7 @@ mixed *getSessionId(string phoneNumber)
 mapping getSession(string sessionId)
 {
     if (previous_program() == RegistrationService) {
-	return sessions[sessionId];
+	return sessions[hex::decodeString(sessionId)];
     }
 }
 
@@ -84,9 +88,10 @@ void remove(string sessionId)
     if (previous_program() == RegistrationService) {
 	mapping values;
 
+	sessionId = hex::decodeString(sessionId);
 	values = sessions[sessionId];
 	if (values) {
-	    phoneIndex[values["phoneNumber"]] = nil;
+	    phoneIndex[phoneToNum(values["phoneNumber"])] = nil;
 	    sessions[sessionId] = nil;
 	}
     }

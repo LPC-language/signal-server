@@ -21,20 +21,23 @@
 # include "services.h"
 
 private inherit "/lib/util/random";
+private inherit "~/lib/phone";
 
 
 object accounts;	/* accountId : account */
 object phoneIndex;	/* phoneNumber : accountId */
 object usernameIndex;	/* username : accountId */
+int version;		/* data version */
 
 /*
  * initialize account server
  */
 static void create()
 {
-    accounts = new KVstore(100);
-    phoneIndex = new KVstore(100);
-    usernameIndex = new KVstore(100);
+    accounts = new KVstore(200);
+    phoneIndex = new KVstore(250);
+    usernameIndex = new KVstore(143);
+    version = 1;
 }
 
 /*
@@ -60,7 +63,7 @@ atomic void add(Account account)
 	/*
 	 * extra indices for the database
 	 */
-	phoneIndex->add(account->phoneNumber(), accountId);
+	phoneIndex->add(phoneToNum(account->phoneNumber()), accountId);
 	username = account->username();
 	if (username) {
 	    usernameIndex->add(username, accountId);
@@ -81,7 +84,13 @@ Account get(string accountId)
  */
 Account getByNumber(string phoneNumber)
 {
-    return accounts[phoneIndex[phoneNumber]];
+    string id;
+
+    id = phoneIndex[phoneToNum(phoneNumber)];
+    if (!id && version == 0) {
+	id = phoneIndex[phoneNumber];
+    }
+    return accounts[id];
 }
 
 /*

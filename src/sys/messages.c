@@ -42,8 +42,8 @@ object mboxes;		/* mail boxes */
  */
 static void create()
 {
-    messages = new KVstoreExp(100, DURATION);
-    mboxes = new KVstore(100);
+    messages = new KVstoreExp(200, DURATION);
+    mboxes = new KVstore(195);
 }
 
 /*
