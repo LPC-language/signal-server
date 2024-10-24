@@ -128,10 +128,10 @@ static void receipt(string id, int deviceId, Envelope envelope)
 
     sourceId = envelope->sourceId();
     sourceDeviceId = envelope->sourceDeviceId();
-    send(sourceId, sourceDeviceId,
-	 ONLINE_REGISTRY->present(sourceId, sourceDeviceId),
-	 new Envelope(id, deviceId, RECEIPT, nil, envelope->timestamp(),
-		      sourceId, FALSE));
+    call_out("send", 0, sourceId, sourceDeviceId,
+	     ONLINE_REGISTRY->present(sourceId, sourceDeviceId),
+	     new Envelope(id, deviceId, RECEIPT, nil, envelope->timestamp(),
+			  sourceId, FALSE));
 }
 
 void processEnvelopes(string id, int deviceId, object endpoint)

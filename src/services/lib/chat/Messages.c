@@ -75,10 +75,11 @@ static void putMessages2(string context, Account account, string sourceId,
 	    }
 	}
 	content = base64::decode(message["content"]);
-	MESSAGE_SERVER->send(destinationId, deviceId, endpoint,
-			     new Envelope(sourceId, sourceDeviceId,
-					  message["type"], new String(content),
-					  timestamp, destinationId, urgent));
+	call_out_other(MESSAGE_SERVER, "send", 0, destinationId, deviceId,
+		       endpoint, new Envelope(sourceId, sourceDeviceId,
+					      message["type"],
+					      new String(content), timestamp,
+					      destinationId, urgent));
     }
 
     respondJson(context, HTTP_OK, ([ "needsSync" : FALSE ]));
