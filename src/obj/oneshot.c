@@ -62,9 +62,9 @@ static void created(int code)
 /*
  * callback with response
  */
-static void response(int code, StringBuffer entity)
+static void response(string context, HttpResponse response, StringBuffer entity)
 {
-    callback->runNext(code, entity);
+    callback->runNext(response->code(), entity);
     callback = nil;
     doneResponse();
     terminate();

@@ -39,8 +39,6 @@ register(CHAT_SERVER, "GET", "/v1/websocket/{}",
 inherit RestServer;
 private inherit base64 "/lib/util/base64";
 private inherit json "/lib/util/json";
-private inherit asn "/lib/util/asn";
-private inherit "~/lib/proto";
 private inherit "/lib/util/random";
 private inherit uuid "~/lib/uuid";
 
@@ -122,17 +120,9 @@ void chatSendRequest(string verb, string path, StringBuffer body,
 		     mapping extraHeaders, Continuation cont,
 		     varargs mixed arguments...)
 {
-    StringBuffer request, chunk;
-    string context, *indices;
-    mixed *values;
-    int sz, i;
+    string context;
+    StringBuffer chunk;
 
-    request = new StringBuffer("\12" + protoString(verb) +
-			       "\22" + protoString(path));
-    if (body) {
-	request->append("\32");
-	request->append(protoStrbuf(body));
-    }
     if (cont) {
 	/* expect a response */
 	do {
@@ -142,24 +132,7 @@ void chatSendRequest(string verb, string path, StringBuffer body,
     } else {
 	context = "\1";		/* no response */
     }
-    request->append("\40");
-    request->append(protoAsn(context));
-
-    if (extraHeaders) {
-	indices = map_indices(extraHeaders);
-	values = map_values(extraHeaders);
-	for (sz = sizeof(indices), i = 0; i < sz; i++) {
-	    request->append(
-		"\52" + protoString(indices[i] + ": " +
-				    ((typeof(values[i]) == T_ARRAY) ?
-				      values[i][0] : values[i]))
-	    );
-	}
-    }
-
-    chunk = new StringBuffer("\010\001\022");
-    chunk->append(protoStrbuf(request));
-    sendChunk(chunk);
+    sendChunk(wsRequest(verb, path, body, extraHeaders, context));
 }
 
 /*
@@ -167,70 +140,15 @@ void chatSendRequest(string verb, string path, StringBuffer body,
  */
 static void chatReceiveResponse(StringBuffer chunk)
 {
-    int c, offset, code;
-    string buf, id, message, headers, header;
-    StringBuffer entity;
+    string context;
     HttpResponse response;
+    StringBuffer entity;
     mixed *handle;
 
-    ({ c, buf, offset }) = parseByte(chunk, nil, 0);
-    if (c != 010) {
-	error("WebSocketResponseMessage.id expected");
-    }
-    ({ id, buf, offset }) = parseAsn(chunk, buf, offset);
-    id = asn::unsignedExtend(id, 8);
-    ({ c, buf, offset }) = parseByte(chunk, buf, offset);
-    if (c != 020) {
-	error("WebSocketResponseMessage.status expected");
-    }
-    ({ code, buf, offset }) = parseInt(chunk, buf, offset);
-    ({ c, buf, offset }) = parseByte(chunk, buf, offset);
-    if (c != 032) {
-	error("WebSocketResponseMessage.message expected");
-    }
-    ({ message, buf, offset }) = parseString(chunk, buf, offset);
+    ({ context, response, entity }) = wsReceiveResponse(chunk);
 
-    if (!parseDone(chunk, buf, offset)) {
-	({ c, buf, offset }) = parseByte(chunk, buf, offset);
-	switch (c) {
-	case 042:
-	    ({ entity, buf, offset }) = parseStrbuf(chunk, buf, offset);
-	    if (parseDone(chunk, buf, offset)) {
-		break;
-	    }
-	    ({ c, buf, offset }) = parseByte(chunk, buf, offset);
-	    if (c != 052) {
-		error("WebSocketResponseMessage.headers expected");
-	    }
-	    /* fall through */
-	case 052:
-	    headers = "";
-	    for (;;) {
-		({ header, buf, offset }) = parseString(chunk, buf, offset);
-		headers += header + "\n";
-		if (parseDone(chunk, buf, offset)) {
-		    break;
-		}
-
-		({ c, buf, offset }) = parseByte(chunk, buf, offset);
-		if (c != 052) {
-		    error("WebSocketResponseMessage.headers expected");
-		}
-	    }
-	    break;
-
-	default:
-	    error("WebSocketResponseMessage.headers expected");
-	}
-    }
-
-    response = new HttpResponse(1.1, code, message);
-    if (headers) {
-	response->setHeaders(new RemoteHttpFields(headers));
-    }
-
-    handle = outgoing[id];
-    outgoing[id] = nil;
+    handle = outgoing[context];
+    outgoing[context] = nil;
     if (handle) {
 	mixed *args;
 	int i;

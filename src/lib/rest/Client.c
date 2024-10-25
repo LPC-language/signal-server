@@ -28,28 +28,43 @@
 # include <status.h>
 # include <type.h>
 
+inherit "~/lib/websocket";
 private inherit "/lib/util/ascii";
 private inherit json "/lib/util/json";
+private inherit "/lib/util/random";
+private inherit "~/lib/proto";
 
 
 private object connection;	/* TLS connection */
 private HttpResponse response;	/* most recent response */
 private mixed handle;		/* call handle */
 private StringBuffer chunks;	/* collected chunks */
+private string websocket;	/* WebSocket service */
+private int opcode, flags;	/* opcode and flags of last WebSocket frame */
+private mapping outgoing;	/* context : callback */
 
 /*
  * initialize
  */
-static void create(string address, int port, string function)
+static object create(string address, int port, string function,
+		     varargs string httpClientPath)
 {
     if (status(OBJECT_PATH(RestTlsClientSession), O_INDEX) == nil) {
 	compile_object(OBJECT_PATH(RestTlsClientSession));
     }
 
-    connection = clone_object(HTTP1_TLS_CLIENT, this_object(), address, port,
+    outgoing = ([ ]);
+
+    if (!httpClientPath) {
+	httpClientPath = HTTP1_TLS_CLIENT;
+    }
+
+    connection = clone_object(httpClientPath, this_object(), address, port,
 			      address, nil, nil,
 			      OBJECT_PATH(RestTlsClientSession));
     handle = function;
+
+    return connection;
 }
 
 /*
@@ -73,11 +88,32 @@ void connectFailed(int errorcode)
 }
 
 /*
- * send a request
+ * send a StringBuffer chunk via WebSocket
  */
-static void request(string method, string host, string path, string type,
-		    StringBuffer entity, mapping extraHeaders,
-		    string function, varargs mixed arguments...)
+static void sendChunk(StringBuffer chunk)
+{
+    if (!websocket) {
+	error("Not a WebSocket connection");
+    }
+    ::wsSendChunk(connection, chunk, 0x12345678);
+}
+
+/*
+ * close WebSocket connection
+ */
+static void sendClose(string code)
+{
+    if (!websocket) {
+	error("Not a WebSocket connection");
+    }
+    ::wsSendClose(connection, code, 0x12345678);
+}
+
+/*
+ * send a HTTP request
+ */
+private void httpRequest(string method, string host, string path, string type,
+			 StringBuffer entity, mapping extraHeaders)
 {
     HttpRequest request;
     HttpFields headers;
@@ -110,23 +146,49 @@ static void request(string method, string host, string path, string type,
     if (entity) {
 	connection->sendChunk(entity);
     }
-
-    handle = ({ function }) + arguments;
 }
 
 /*
- * handle a REST response
+ * send a request
  */
-private void call(StringBuffer entity)
+static void request(string method, string host, string path, string type,
+		    StringBuffer entity, mapping extraHeaders,
+		    string function, varargs mixed arguments...)
 {
-    mixed *args;
-    int i;
-    string str;
+    if (websocket) {
+	string context;
 
-    args = handle[1 ..];
+	if (function) {
+	    do {
+		context = random_string(8);
+	    } while (outgoing[context]);
+	    outgoing[context] = ({ function }) + arguments;
+	} else {
+	    context = "\1";
+	}
+	sendChunk(wsRequest(method, path, entity, extraHeaders, context));
+    } else {
+	httpRequest(method, host, path, type, entity, extraHeaders);
+	handle = ({ function }) + arguments;
+    }
+}
+
+/*
+ * handle a REST request or response
+ */
+private void call(string context, object parsed, string function, mixed *args,
+		  StringBuffer entity)
+{
+    int i;
+    mixed arg;
+
     for (i = sizeof(args); --i >= 0; ) {
 	if (typeof(args[i]) == T_STRING) {
-	    args[i] = response->headerValue(args[i]);
+	    arg = parsed->headerValue(args[i]);
+	    if (typeof(arg) == T_ARRAY && sizeof(arg) == 1) {
+		arg = arg[0];
+	    }
+	    args[i] = arg;
 	} else {
 	    switch (args[i]) {
 	    case ARG_ENTITY:
@@ -134,15 +196,15 @@ private void call(StringBuffer entity)
 		break;
 
 	    case ARG_ENTITY_JSON:
-		str = response->headerValue("Content-Type");
-		args[i] = (lower_case(str) == "application/json") ?
+		arg = parsed->headerValue("Content-Type");
+		args[i] = (!arg || lower_case(arg) == "application/json") ?
 			   json::decode(entity->chunk()) : nil;
 		break;
 	    }
 	}
     }
 
-    call_other(this_object(), handle[0], response->code(), args...);
+    call_other(this_object(), function, context, parsed, args...);
 }
 
 /*
@@ -162,7 +224,7 @@ void receiveResponse(HttpResponse response)
 	    length = response->headerValue("Content-Length");
 	    switch (typeof(length)) {
 	    case T_NIL:
-		call(nil);
+		call(nil, response, handle[0], handle[1 ..], nil);
 		break;
 
 	    case T_INT:
@@ -195,7 +257,7 @@ void receiveChunk(StringBuffer chunk, HttpFields trailers)
 	} else {
 	    chunk = chunks;
 	    chunks = nil;
-	    call(chunk);
+	    call(nil, response, handle[0], handle[1 ..], chunk);
 	}
     }
 }
@@ -206,7 +268,125 @@ void receiveChunk(StringBuffer chunk, HttpFields trailers)
 void receiveEntity(StringBuffer entity)
 {
     if (previous_object() == connection) {
-	call(entity);
+	call(nil, response, handle[0], handle[1 ..], entity);
+    }
+}
+
+/*
+ * upgrade to WebSocket protocol
+ */
+static void upgradeToWebSocket(string service)
+{
+    websocket = service;
+    if (connection) {
+	connection->expectWsFrame();
+    }
+}
+
+/*
+ * send a websocket response
+ */
+static void wsRespond(string context, int code, StringBuffer entity,
+		      mapping extraHeaders)
+{
+    sendChunk(wsResponse(context, code, entity, extraHeaders));
+}
+
+/*
+ * receive WebSocket frame
+ */
+void receiveWsFrame(int opcode, int flags, int len)
+{
+    if (previous_object() == connection) {
+	::opcode = opcode;
+	::flags = flags;
+    }
+}
+
+/*
+ * receive WebSocket request
+ */
+private void receiveWsRequest(StringBuffer chunk)
+{
+    string context;
+    HttpRequest request;
+    StringBuffer body;
+    mixed *callback;
+
+    ({ context, request, body }) = wsReceiveRequest(chunk, "client");
+
+    callback = REST_API->lookup("client", request->method(), request->path());
+    if (!callback) {
+	wsRespond(context, HTTP_NOT_FOUND, nil, nil);
+    } else {
+	call(context, request, callback[0], callback[1 ..], body);
+    }
+}
+
+/*
+ * receive websocket response
+ */
+private void receiveWsResponse(StringBuffer chunk)
+{
+    string context;
+    HttpResponse response;
+    StringBuffer body;
+    mixed *callback;
+
+    ({ context, response, body }) = wsReceiveResponse(chunk);
+    callback = outgoing[context];
+    if (callback) {
+	outgoing[context] = nil;
+	call(context, response, callback[0], callback[1 ..], body);
+    }
+}
+
+/*
+ * receive WebSocket chunk
+ */
+void receiveWsChunk(StringBuffer chunk)
+{
+    int c, offset;
+    string buf;
+
+    if (previous_object() == connection) {
+	if (opcode == WEBSOCK_CLOSE) {
+	    wsSendClose(connection, chunk->chunk());
+	} else if (websocket == "chat") {
+	    ({ c, buf, offset }) = parseByte(chunk, nil, 0);
+	    if (c != 010) {
+		error("WebSocketMessage.type expected");
+	    }
+	    ({ c, buf, offset }) = parseInt(chunk, buf, offset);
+	    switch (c) {
+	    case 1:	/* request */
+		({ c, buf, offset }) = parseByte(chunk, buf, offset);
+		if (c != 022) {
+		    error("WebSockMessage.request expected");
+		}
+		({ chunk, buf, offset }) = parseStrbuf(chunk, buf, offset);
+		receiveWsRequest(chunk);
+		break;
+
+	    case 2:	/* response */
+		({ c, buf, offset }) = parseByte(chunk, buf, offset);
+		if (c != 032) {
+		    error("WebSockMessage.response expected");
+		}
+		({ chunk, buf, offset }) = parseStrbuf(chunk, buf, offset);
+		receiveWsResponse(chunk);
+		break;
+
+	    default:
+		error("Unknown websocket message");
+	    }
+	} else {
+	    call_other(this_object(), websocket + "ReceiveChunk", chunk);
+	}
+
+	if (connection) {
+	    connection->expectWsFrame();
+	}
     }
 }
 
@@ -216,7 +396,21 @@ void receiveEntity(StringBuffer entity)
 static void doneResponse()
 {
     if (connection) {
-	connection->doneResponse();
+	if (!websocket) {
+	    connection->doneResponse();
+	} else if (opcode == WEBSOCK_CLOSE) {
+	    connection->terminate();
+	}
+    }
+}
+
+/*
+ * finished sending chunk
+ */
+void doneChunk()
+{
+    if (previous_object() == connection && opcode == WEBSOCK_CLOSE) {
+	connection->terminate();
     }
 }
 

@@ -124,12 +124,12 @@ static void sendMessage()
 /*
  * process response
  */
-static void response(int code, StringBuffer entity)
+static void response(string context, HttpResponse response, StringBuffer entity)
 {
     Continuation callback;
 
     requested = FALSE;
-    switch (code) {
+    switch (response->code()) {
     case HTTP_NOT_FOUND:
 	/*
 	 * Firebase sometimes responds "Requested entity was not found",
@@ -143,7 +143,7 @@ static void response(int code, StringBuffer entity)
     case HTTP_OK:
 	callback = queue[0][1];
 	if (callback) {
-	    callback->runNext(code);
+	    callback->runNext(response->code());
 	}
 	queue = queue[1 ..];
 	if (sizeof(queue) != 0) {

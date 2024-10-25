@@ -22,6 +22,8 @@
 # define RestClient		object "/usr/MsgServer/lib/rest/Client"
 # define RestTlsClientSession	object "/usr/MsgServer/lib/TlsClientSession"
 
+# define WEBSOCKET_GUID		"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+
 # define ARG_ENTITY		1
 # define ARG_ENTITY_JSON	2
 # define ARG_HEADER_AUTH	3

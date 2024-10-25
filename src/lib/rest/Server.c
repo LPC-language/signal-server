@@ -31,6 +31,7 @@
 # include <status.h>
 # include <type.h>
 
+inherit "~/lib/websocket";
 private inherit "/lib/util/ascii";
 private inherit base64 "/lib/util/base64";
 private inherit json "/lib/util/json";
@@ -38,15 +39,12 @@ private inherit uuid "~/lib/uuid";
 private inherit "~/lib/proto";
 
 
-# define GUID	"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-
 private object connection;	/* TLS connection */
 private HttpRequest request;	/* most recent request */
 private mixed *handle;		/* call handle */
 private string login, password;	/* websocket authentication */
 private string websocket;	/* WebSocket service */
 private int opcode, flags;	/* opcode and flags of last WebSocket frame */
-private int closing;		/* closing WebSocket connection */
 
 /*
  * establish connection
@@ -66,10 +64,7 @@ static void sendChunk(StringBuffer chunk)
     if (!websocket) {
 	error("Not a WebSocket connection");
     }
-    if (closing) {
-	error("WebSocket connection is closing");
-    }
-    connection->sendWsChunk(WEBSOCK_BINARY, WEBSOCK_FIN, 0, chunk);
+    ::wsSendChunk(connection, chunk);
 }
 
 /*
@@ -80,67 +75,7 @@ static void sendClose(string code)
     if (!websocket) {
 	error("Not a WebSocket connection");
     }
-    if (!closing) {
-	closing = TRUE;
-	connection->sendWsChunk(WEBSOCK_CLOSE, WEBSOCK_FIN, 0,
-				new StringBuffer(code));
-    }
-}
-
-/*
- * response code => comment
- */
-private string comment(int code)
-{
-    switch (code) {
-    case HTTP_CONTINUE:			return "Continue";
-    case HTTP_SWITCHING_PROTOCOLS:	return "Switching Protocols";
-    case HTTP_OK:			return "OK";
-    case HTTP_CREATED:			return "Created";
-    case HTTP_ACCEPTED:			return "Accepted";
-    case HTTP_NON_AUTHORITATIVE_INFORMATION:
-					return "Non-authoritative information";
-    case HTTP_NO_CONTENT:		return "No Content";
-    case HTTP_RESET_CONTENT:		return "Reset Content";
-    case HTTP_PARTIAL_CONTENT:		return "Partial Content";
-    case HTTP_MULTIPLE_CHOICES:		return "Multiple Choices";
-    case HTTP_MOVED_PERMANENTLY:	return "Moved Permanently";
-    case HTTP_FOUND:			return "Found";
-    case HTTP_SEE_OTHER:		return "See Other";
-    case HTTP_NOT_MODIFIED:		return "Not Modified";
-    case HTTP_USE_PROXY:		return "Use Proxy";
-    case HTTP_TEMPORARY_REDIRECT:	return "Temporary Redirect";
-    case HTTP_PERMANENT_REDIRECT:	return "Permanent Redirect";
-    case HTTP_BAD_REQUEST:		return "Bad Request";
-    case HTTP_UNAUTHORIZED:		return "Unauthorized";
-    case HTTP_PAYMENT_REQUIRED:		return "Payment Required";
-    case HTTP_FORBIDDEN:		return "Forbidden";
-    case HTTP_NOT_FOUND:		return "Not Found";
-    case HTTP_METHOD_NOT_ALLOWED:	return "Method Not Allowed";
-    case HTTP_NOT_ACCEPTABLE:		return "Not Acceptable";
-    case HTTP_PROXY_AUTHENTICATION_REQUIRED:
-					return "Proxy Authentication Required";
-    case HTTP_REQUEST_TIMEOUT:		return "Request Timeout";
-    case HTTP_CONFLICT:			return "Conflict";
-    case HTTP_GONE:			return "Gone";
-    case HTTP_LENGTH_REQUIRED:		return "Length Required";
-    case HTTP_PRECONDITION_FAILED:	return "Precondition Failed";
-    case HTTP_CONTENT_TOO_LARGE:	return "Content Too Large";
-    case HTTP_URI_TOO_LONG:		return "URI Too Long";
-    case HTTP_UNSUPPORTED_MEDIA_TYPE:	return "Unsupported Media Type";
-    case HTTP_RANGE_NOT_SATISFIABLE:	return "Range Not Satisfiable";
-    case HTTP_EXPECTATION_FAILED:	return "Expectation Failed";
-    case HTTP_MISDIRECTED_REQUEST:	return "Misdirected Request";
-    case HTTP_UNPROCESSABLE_CONTENT:	return "Unprocessable Content";
-    case HTTP_UPGRADE_REQUIRED:		return "Upgrade Required";
-    case HTTP_INTERNAL_ERROR:		return "Internal Error";
-    case HTTP_NOT_IMPLEMENTED:		return "Not Implemented";
-    case HTTP_BAD_GATEWAY:		return "Bad Gateway";
-    case HTTP_SERVICE_UNAVAILABLE:	return "Service Unavailable";
-    case HTTP_GATEWAY_TIMEOUT:		return "Gateway Timeout";
-    case HTTP_VERSION_NOT_SUPPORTED:	return "Version Not Supported";
-    default:				return "";
-    }
+    ::wsSendClose(connection, code);
 }
 
 /*
@@ -187,41 +122,6 @@ private void httpRespond(int code, string type, StringBuffer entity,
 }
 
 /*
- * send a websocket response
- */
-private void wsRespond(string context, int code, StringBuffer entity,
-		       mapping extraHeaders)
-{
-    StringBuffer response, chunk;
-    string *indices;
-    mixed *values;
-    int sz, i;
-
-    response = new StringBuffer("\10" + protoAsn(context) +
-				"\20" + protoInt(code) +
-				"\32" + protoString(comment(code)));
-    if (entity) {
-	response->append("\42");
-	response->append(protoStrbuf(entity));
-    }
-    if (extraHeaders) {
-	indices = map_indices(extraHeaders);
-	values = map_values(extraHeaders);
-	for (sz = sizeof(indices), i = 0; i < sz; i++) {
-	    response->append(
-		"\52" + protoString(indices[i] + ": " +
-				    ((typeof(values[i]) == T_ARRAY) ?
-				      values[i][0] : values[i]))
-	    );
-	}
-    }
-
-    chunk = new StringBuffer("\010\002\032");
-    chunk->append(protoStrbuf(response));
-    sendChunk(chunk);
-}
-
-/*
  * send a response
  */
 static int respond(string context, int code, string type, StringBuffer entity,
@@ -230,7 +130,7 @@ static int respond(string context, int code, string type, StringBuffer entity,
     request = nil;
     handle = nil;
     if (websocket) {
-	wsRespond(context, code, entity, extraHeaders);
+	sendChunk(wsResponse(context, code, entity, extraHeaders));
     } else {
 	httpRespond(code, type, entity, extraHeaders);
     }
@@ -462,12 +362,17 @@ static int upgradeToWebSocket(string service, string key, varargs string login,
     code = respond(nil, HTTP_SWITCHING_PROTOCOLS, nil, nil, ([
 	"Upgrade" : ({ "websocket" }),
 	"Connection" : ({ "Upgrade" }),
-	"Sec-WebSocket-Accept" : base64::encode(hash_string("SHA1", key + GUID))
+	"Sec-WebSocket-Accept" :
+		    base64::encode(hash_string("SHA1", key + WEBSOCKET_GUID))
     ]));
 
     websocket = service;
     ::login = login;
     ::password = password;
+
+    if (connection) {
+	connection->expectWsFrame();
+    }
 
     return code;
 }
@@ -488,45 +393,12 @@ void receiveWsFrame(int opcode, int flags, int len)
  */
 private void receiveWsRequest(StringBuffer chunk)
 {
-    int c, offset;
-    string buf, verb, path, context, headers, header;
-    StringBuffer body;
+    string context;
     HttpRequest request;
+    StringBuffer body;
     mixed *handle;
 
-    ({ c, buf, offset }) = parseByte(chunk, nil, 0);
-    if (c != 012) {
-	error("WebSocketRequestMessage.verb expected");
-    }
-    ({ verb, buf, offset }) = parseString(chunk, buf, offset);
-    ({ c, buf, offset }) = parseByte(chunk, buf, offset);
-    if (c != 022) {
-	error("WebSocketRequestMessage.path expected");
-    }
-    ({ path, buf, offset }) = parseString(chunk, buf, offset);
-    ({ c, buf, offset }) = parseByte(chunk, buf, offset);
-    if (c == 032) {
-	({ body, buf, offset }) = parseStrbuf(chunk, buf, offset);
-	({ c, buf, offset }) = parseByte(chunk, buf, offset);
-    }
-    if (c != 040) {
-	error("WebSocketRequestMessage.id expected");
-    }
-    ({ context, buf, offset }) = parseAsn(chunk, buf, offset);
-
-    for (headers = ""; !parseDone(chunk, buf, offset); headers += header + "\n")
-    {
-	({ c, buf, offset }) = parseByte(chunk, buf, offset);
-	if (c != 052) {
-	    error("WebSocketRequestMessage.headers expected");
-	}
-	({ header, buf, offset }) = parseString(chunk, buf, offset);
-    }
-
-    request = new HttpRequest(1.1, verb, nil, CHAT_SERVER, path);
-    if (strlen(headers) != 0) {
-	request->setHeaders(new RemoteHttpFields(headers));
-    }
+    ({ context, request, body }) = wsReceiveRequest(chunk, CHAT_SERVER);
 
     handle = REST_API->lookup(CHAT_SERVER, request->method(), request->path());
     if (!handle) {
@@ -546,7 +418,7 @@ void receiveWsChunk(StringBuffer chunk)
 
     if (previous_object() == connection) {
 	if (opcode == WEBSOCK_CLOSE) {
-	    sendClose(chunk->chunk());
+	    wsSendClose(connection, chunk->chunk());
 	} else if (websocket == "chat") {
 	    ({ c, buf, offset }) = parseByte(chunk, nil, 0);
 	    if (c != 010) {
@@ -578,6 +450,10 @@ void receiveWsChunk(StringBuffer chunk)
 	} else {
 	    call_other(this_object(), websocket + "ReceiveChunk", chunk);
 	}
+
+	if (connection) {
+	    connection->expectWsFrame();
+	}
     }
 }
 
@@ -591,8 +467,6 @@ void doneChunk()
 	    connection->doneRequest();
 	} else if (opcode == WEBSOCK_CLOSE) {
 	    connection->terminate();
-	} else {
-	    connection->expectWsFrame();
 	}
     }
 }
