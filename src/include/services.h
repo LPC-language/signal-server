@@ -19,6 +19,7 @@
 # define APPLICATION_NAME	"MsgServer"
 # define APPLICATION_VERSION	"9.60"
 
+# define SERVICES		"/usr/MsgServer/services/obj/server"
 # define ChatServices		"/usr/MsgServer/services/lib/Chat"
 # define StorageServices	"/usr/MsgServer/services/lib/Storage"
 # define CdsiServices		"/usr/MsgServer/services/lib/Cdsi"

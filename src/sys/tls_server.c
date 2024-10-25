@@ -18,6 +18,7 @@
 
 # include <kernel/user.h>
 # include "~HTTP/HttpConnection.h"
+# include "services.h"
 # include "~/config/services"
 
 
@@ -45,7 +46,7 @@ object select(string str)
     if (previous_object() == userd) {
 	object connection, server;
 
-	server = clone_object("~/services/obj/server");
+	server = clone_object(SERVICES);
 	connection = clone_object(HTTP1_TLS_SERVER, server, certificate, key,
 				  FALSE, ({
 	    CHAT_SERVER,

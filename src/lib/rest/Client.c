@@ -286,8 +286,8 @@ static void upgradeToWebSocket(string service)
 /*
  * send a websocket response
  */
-static void wsRespond(string context, int code, StringBuffer entity,
-		      mapping extraHeaders)
+static void respond(string context, int code, StringBuffer entity,
+		    mapping extraHeaders)
 {
     sendChunk(wsResponse(context, code, entity, extraHeaders));
 }
@@ -317,7 +317,7 @@ private void receiveWsRequest(StringBuffer chunk)
 
     callback = REST_API->lookup("client", request->method(), request->path());
     if (!callback) {
-	wsRespond(context, HTTP_NOT_FOUND, nil, nil);
+	respond(context, HTTP_NOT_FOUND, nil, nil);
     } else {
 	call(context, request, callback[0], callback[1 ..], body);
     }

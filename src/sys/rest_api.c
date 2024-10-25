@@ -95,4 +95,5 @@ static void create()
 # include "~/services/lib/Chat.c"
 # include "~/services/lib/Storage.c"
 # include "~/services/lib/Cdsi.c"
+# include "~/benchmark/obj/client.c"
 }
