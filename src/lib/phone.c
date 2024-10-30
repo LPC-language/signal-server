@@ -22,7 +22,7 @@ static string phoneToNum(string str)
 		      asn_mult(asn::encode((int) str[strlen(str) - 7 ..]),
 			       multiplier, LIMIT),
 		      LIMIT);
-	multiplier = asn_mult(multiplier, TEN_MILLION);
+	multiplier = asn_mult(multiplier, TEN_MILLION, LIMIT);
     }
     num = asn_add(num, asn_mult(asn::encode((int) str), multiplier, LIMIT),
 		  LIMIT);
