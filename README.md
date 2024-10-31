@@ -127,17 +127,20 @@ all git repositories are checked out side by side.
     `signal-server/src/config/services`, and change the domain names in that
     file and in `signal-android/app/build.gradle`.  Also change static IP
     numbers in `signal-android/app/static-ips.gradle`.
-9.  Generate a self-signed certificate for `*.yourdomain.com`, store it as
-    `signal-server/src/config/cert/server.{pem,key}` and add the certificate to
+9.  Generate a self-signed CA certificate for your server and add it to
     `signal-android/app/src/main/res/raw/whisper.store` (password: "whisper")
     using an application like
     [Keystore Explorer](https://keystore-explorer.org/).
-10. From https://console.firebase.google.com, create a Firebase project for
+10. Generate a certificate for `*.yourdomain.com`, sign it with the
+    aforementioned CA certificate key, and store it as
+    `signal-server/src/config/cert/server.{pem,key}` where `server.pem` is
+    the concatenation of the website certificate and the CA certificate.
+11. From https://console.firebase.google.com, create a Firebase project for
     `signal-server` using your activated Google Cloud account.  Add an Android
     app to the project.  Download `google-services.json` for the app and update
     `signal-android/app/src/main/res/values/firebase_messaging.xml`
     accordingly (leave the "default_web_client_id" line as is).
-11. Go to "Project Settings/Service accounts", generate a new private key for
+12. Go to "Project Settings/Service accounts", generate a new private key for
     the Firebase Admin SDK and save the downloaded JSON data as
     `signal-server/src/config/fcm-key/service-account.json`.  It should look
     like this:
@@ -156,18 +159,18 @@ all git repositories are checked out side by side.
           "universe_domain": "googleapis.com"
         }
 
-12. Start the server with `dgd/bin/dgd signal-server/server.dgd`.  This will
+13. Start the server with `dgd/bin/dgd signal-server/server.dgd`.  This will
     create `signal-server/src/config/ZKGROUP_SERVER_PUBLIC_PARAMS`.  Copy the
     contents to `android/defaultConfig/ZKGROUP_SERVER_PUBLIC_PARAMS` in
     `signal-android/app/build.gradle`.
-13. `signal-server` listens on port 8443.  Listening on port 443 would require
+14. `signal-server` listens on port 8443.  Listening on port 443 would require
     running the server as root and is not recommended, so redirect port 443 to
     8443 with a command like
 
         sudo iptables -t nat -A PREROUTING -d 192.168.0.1 -p tcp --dport 443 -j DNAT --to-destination 192.168.0.1:8443
 
-14. Build the Android client.
-15. Run the Android client.  Register with the server, using any verification
+15. Build the Android client.
+16. Run the Android client.  Register with the server, using any verification
     code when asked (the server will not send one through SMS) and choose to
     skip and then disable a PIN code.  You should now be able to send
     end-to-end encrypted messages to other registered clients.
