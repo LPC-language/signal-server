@@ -33,8 +33,8 @@ int version;	/* data version */
  */
 static void create()
 {
-    pni = new KVstore(250);
-    ipn = new KVstore(200);
+    pni = new KVstore(249);
+    ipn = new KVstore(199);
     version = 1;
 }
 

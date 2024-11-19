@@ -5,9 +5,9 @@ directory	= "cloud-server/src";	/* use absolute path when hotbooting! */
 					/* base directory */
 ed_tmpfile	= "../state/ed";	/* proto editor tmpfile */
 swap_file	= "../state/swap";	/* swap file */
-swap_size	= 65535;		/* # sectors in swap file */
+swap_size	= 1048576;		/* # sectors in swap file */
 sector_size	= 8192;			/* swap sector size */
-swap_fragment	= 1024;			/* fragment to swap out */
+swap_fragment	= 40960;		/* fragment to swap out */
 static_chunk	= 64512;		/* static memory chunk */
 dynamic_chunk	= 261120;		/* dynamic memory chunk */
 dump_file	= "../state/snapshot";	/* snapshot file */
@@ -34,8 +34,8 @@ auto_object	= "/kernel/lib/auto";	/* automatically inherited object */
 driver_object	= "/kernel/sys/driver";	/* driver object */
 create		= "_F_create";		/* low-level create function */
 
-users		= 65535;		/* max # of users */
+users		= 255;			/* max # of users */
 editors		= 10;			/* max # of editor sessions */
 objects		= 65535;		/* max # of objects */
-call_outs	= 65534;		/* max # of call_outs */
+call_outs	= 1048576;		/* max # of call_outs */
 array_size	= 32767;		/* max array size */

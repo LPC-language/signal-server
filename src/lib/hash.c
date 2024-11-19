@@ -17,6 +17,7 @@
  */
 
 private inherit hex "/lib/util/hex";
+private inherit "/lib/util/random";
 private inherit "~TLS/api/lib/hkdf";
 
 
@@ -26,7 +27,7 @@ private inherit "~TLS/api/lib/hkdf";
 static string *hash(string token, varargs string salt)
 {
     if (!salt) {
-	salt = hex::format(secure_random(16));
+	salt = hex::format(random_string(16));
     }
     return ({
 	"2." + hex::format(HKDF(token, "authtoken", 32, "SHA256", salt)),

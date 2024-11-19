@@ -106,8 +106,7 @@ static void getWebsocketLogin3(string context, string key, string login,
     if (success) {
 	upgradeToWebSocket("chat", key, login, password);
 	ONLINE_REGISTRY->register(id, deviceId, this_object());
-	call_out_other(MESSAGE_SERVER, "processEnvelopes", 0, id, deviceId,
-		       this_object());
+	call_out_other(MESSAGE_SERVER, "send", 0, id, deviceId, this_object());
     } else {
 	respond(context, HTTP_UNAUTHORIZED, nil, nil);
     }
@@ -116,9 +115,9 @@ static void getWebsocketLogin3(string context, string key, string login,
 /*
  * send a WebSocket request
  */
-void chatSendRequest(string verb, string path, StringBuffer body,
-		     mapping extraHeaders, Continuation cont,
-		     varargs mixed arguments...)
+static void chatSendRequest(string verb, string path, StringBuffer body,
+			    mapping extraHeaders, Continuation cont,
+			    varargs mixed arguments...)
 {
     string context;
     StringBuffer chunk;

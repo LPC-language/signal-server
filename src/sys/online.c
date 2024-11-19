@@ -27,7 +27,7 @@ object endpoints;	/* connected WebSocket endpoints */
  */
 static void create()
 {
-    endpoints = new KVstoreObj(195);
+    endpoints = new KVstoreObj(194);
 }
 
 /*

@@ -26,7 +26,7 @@ object keys;	/* accountId : keys */
  */
 static void create()
 {
-    keys = new KVstore(200);
+    keys = new KVstore(199);
 }
 
 /*

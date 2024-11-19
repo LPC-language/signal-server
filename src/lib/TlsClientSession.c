@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.
+ * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as

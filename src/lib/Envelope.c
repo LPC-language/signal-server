@@ -19,10 +19,12 @@
 # include <String.h>
 # include "Timestamp.h"
 
+private inherit "/lib/util/random";
 private inherit "~/lib/proto";
 private inherit uuid "~/lib/uuid";
 
 
+private object origin;			/* origin endpoint */
 private int type;			/* content type */
 private Timestamp timestamp;		/* content timestamp */
 private int sourceDeviceId;		/* source device ID */
@@ -31,23 +33,26 @@ private string guid;			/* message GUID */
 private Timestamp serverTimestamp;	/* envelope timestamp */
 private string sourceId;		/* source account ID */
 private string destinationId;		/* destination account ID */
+private int destinationDeviceId;	/* destination device ID */
 private int urgent;			/* urgent? */
 
 /*
  * create message envelope
  */
-static void create(string sourceId, int sourceDeviceId, int type,
+static void create(object origin, string sourceId, int sourceDeviceId, int type,
 		   String content, Timestamp timestamp, string destinationId,
-		   int urgent)
+		   int destinationDeviceId, int urgent)
 {
     ::type = type;
     ::timestamp = timestamp;
+    ::origin = origin;
     ::sourceDeviceId = sourceDeviceId;
     ::content = content;
-    guid = secure_random(16);
+    guid = random_string(16);
     serverTimestamp = new Timestamp();
     ::sourceId = sourceId;
     ::destinationId = destinationId;
+    ::destinationDeviceId = destinationDeviceId;
     ::urgent = urgent;
 }
 
@@ -85,6 +90,7 @@ StringBuffer transport()
 
 
 int type()			{ return type; }
+object origin()			{ return origin; }
 string sourceId()		{ return sourceId; }
 int sourceDeviceId()		{ return sourceDeviceId; }
 Timestamp timestamp()		{ return timestamp; }
@@ -92,4 +98,5 @@ String content()		{ return content; }
 string guid()			{ return guid; }
 Timestamp serverTimestamp()	{ return serverTimestamp; }
 string destinationId()		{ return destinationId; }
+int destinationDeviceId()	{ return destinationDeviceId; }
 int urgent()			{ return urgent; }

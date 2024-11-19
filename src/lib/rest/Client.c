@@ -47,7 +47,7 @@ private mapping outgoing;	/* context : callback */
  * initialize
  */
 static object create(string address, int port, string function,
-		     varargs string httpClientPath)
+		     varargs string httpClientPath, string tlsClientSessionPath)
 {
     if (status(OBJECT_PATH(RestTlsClientSession), O_INDEX) == nil) {
 	compile_object(OBJECT_PATH(RestTlsClientSession));
@@ -58,10 +58,12 @@ static object create(string address, int port, string function,
     if (!httpClientPath) {
 	httpClientPath = HTTP1_TLS_CLIENT;
     }
+    if (!tlsClientSessionPath) {
+	tlsClientSessionPath = OBJECT_PATH(RestTlsClientSession);
+    }
 
     connection = clone_object(httpClientPath, this_object(), address, port,
-			      address, nil, nil,
-			      OBJECT_PATH(RestTlsClientSession));
+			      address, nil, nil, tlsClientSessionPath);
     handle = function;
 
     return connection;
@@ -319,7 +321,7 @@ private void receiveWsRequest(StringBuffer chunk)
     if (!callback) {
 	respond(context, HTTP_NOT_FOUND, nil, nil);
     } else {
-	call(context, request, callback[0], callback[1 ..], body);
+	call(context, request, callback[0], callback[2 ..], body);
     }
 }
 

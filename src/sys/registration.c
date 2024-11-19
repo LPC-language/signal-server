@@ -34,8 +34,8 @@ object phoneIndex;	/* phoneNumber : sessionId */
  */
 static void create()
 {
-    sessions = new KVstoreExp(200, DURATION);
-    phoneIndex = new KVstoreExp(250, DURATION);
+    sessions = new KVstoreExp(199, DURATION);
+    phoneIndex = new KVstoreExp(249, DURATION);
 }
 
 /*

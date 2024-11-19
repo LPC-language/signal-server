@@ -34,9 +34,9 @@ int version;		/* data version */
  */
 static void create()
 {
-    accounts = new KVstore(200);
-    phoneIndex = new KVstore(250);
-    usernameIndex = new KVstore(143);
+    accounts = new KVstore(199);
+    phoneIndex = new KVstore(249);
+    usernameIndex = new KVstore(142);
     version = 1;
 }
 
@@ -47,27 +47,25 @@ atomic void add(Account account)
 {
     string accountId, username;
 
-    if (previous_program() == RegistrationService) {
-	for (;;) {
-	    accountId = random_string(16);
-	    try {
-		accounts->add(accountId, account);
-	    } catch (...) {
-		continue;
-	    }
-	    break;
+    for (;;) {
+	accountId = random_string(16);
+	try {
+	    accounts->add(accountId, account);
+	} catch (...) {
+	    continue;
 	}
+	break;
+    }
 
-	account->setId(accountId);
+    account->setId(accountId);
 
-	/*
-	 * extra indices for the database
-	 */
-	phoneIndex->add(phoneToNum(account->phoneNumber()), accountId);
-	username = account->username();
-	if (username) {
-	    usernameIndex->add(username, accountId);
-	}
+    /*
+     * extra indices for the database
+     */
+    phoneIndex->add(phoneToNum(account->phoneNumber()), accountId);
+    username = account->username();
+    if (username) {
+	usernameIndex->add(username, accountId);
     }
 }
 
@@ -90,7 +88,7 @@ Account getByNumber(string phoneNumber)
     if (!id && version == 0) {
 	id = phoneIndex[phoneNumber];
     }
-    return accounts[id];
+    return (id) ? accounts[id] : nil;
 }
 
 /*
