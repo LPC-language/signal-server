@@ -61,27 +61,28 @@ void startConnection(object client)
     connection(client);
 }
 
-static int inactivityTimeout()	{ return 1000; }
+static int inactivityTimeout()	{ return 1000000; }
 
 /*
  * receive a request
  */
-static int receiveRequest(int code, HttpRequest request)
+static void receiveRequest(int code, HttpRequest request)
 {
     requests = TRUE;
-    return ::receiveRequest(code, request);
+    ::receiveRequest(code, request);
 }
 
 /*
  * receive a message
  */
-static int receive_message(string str)
+static void receive_message(string str)
 {
     if (!received) {
 	received = TRUE;
-	return tlsAccept(str, FALSE, ((hosts) ? hosts : ({ }))...);
+	tlsAccept(str, FALSE, ((hosts) ? hosts : ({ }))...);
+    } else {
+	tlsReceive(str);
     }
-    return tlsReceive(str);
 }
 
 /*
@@ -96,25 +97,9 @@ static void logout(int quit)
 /*
  * send remainder of message
  */
-static int message_done()
+static void message_done()
 {
-    return messageDone();
-}
-
-/*
- * is there buffered input?
- */
-static int buffered_input()
-{
-    return bufferedInput();
-}
-
-/*
- * reprocess pending input
- */
-static void restart_input()
-{
-    restartInput();
+    messageDone();
 }
 
 /*

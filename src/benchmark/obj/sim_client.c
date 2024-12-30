@@ -21,13 +21,10 @@
 # include "~HTTP/HttpField.h"
 # include "~HTTP/HttpConnection.h"
 # include "~HTTP/SimUser.h"
-# include "~TLS/tls.h"
 
-inherit client Http1TlsClient;
+inherit client Http1Client;
 inherit user SimUser;
 
-
-string host;		/* server hostname */
 
 /*
  * initialize HTTP connection object
@@ -36,19 +33,14 @@ static void create(object client, string address, int port, string host,
 		   string responsePath, string fieldsPath,
 		   string tlsClientSessionPath)
 {
-    ::host = host;
     if (!responsePath) {
 	responsePath = OBJECT_PATH(RemoteHttpResponse);
     }
     if (!fieldsPath) {
 	fieldsPath = OBJECT_PATH(RemoteHttpFields);
     }
-    if (!tlsClientSessionPath) {
-	tlsClientSessionPath = OBJECT_PATH(TlsClientSession);
-    }
-    client::create(client, address, port, responsePath, fieldsPath,
-		   tlsClientSessionPath);
-    user::create(MODE_RAW);
+    client::create(client, address, port, responsePath, fieldsPath);
+    user::create(MODE_LINE);
 }
 
 /*
@@ -57,7 +49,7 @@ static void create(object client, string address, int port, string host,
 void startConnection(object server)
 {
     connection(server);
-    tlsConnect(host);
+    connected();
 }
 
 static int inactivityTimeout()	{ return 1000000; }
@@ -67,7 +59,7 @@ static int inactivityTimeout()	{ return 1000000; }
  */
 static void receive_message(string str)
 {
-    tlsReceive(str);
+    receiveBytes(str);
 }
 
 /*
@@ -75,7 +67,7 @@ static void receive_message(string str)
  */
 static void logout(int quit)
 {
-    tlsClose(quit);
+    close(quit);
     destruct_object(this_object());
 }
 

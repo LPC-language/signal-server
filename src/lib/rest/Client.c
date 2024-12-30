@@ -212,11 +212,11 @@ private void call(string context, object parsed, string function, mixed *args,
 /*
  * handle a response
  */
-void receiveResponse(HttpResponse response)
+static void _receiveResponse(HttpResponse response, object prev)
 {
     mixed length;
 
-    if (previous_object() == connection) {
+    if (prev == connection) {
 	::response = response;
 
 	if (response->headerValue("Transfer-Encoding")) {
@@ -248,11 +248,19 @@ void receiveResponse(HttpResponse response)
 }
 
 /*
+ * flow: handle a response
+ */
+void receiveResponse(HttpResponse response)
+{
+    call_out("_receiveResponse", 0, response, previous_object());
+}
+
+/*
  * receive a chunk
  */
-void receiveChunk(StringBuffer chunk, HttpFields trailers)
+static void _receiveChunk(StringBuffer chunk, HttpFields trailers, object prev)
 {
-    if (previous_object() == connection) {
+    if (prev == connection) {
 	if (chunk) {
 	    chunks->append(chunk);
 	    connection->expectChunk();
@@ -265,13 +273,29 @@ void receiveChunk(StringBuffer chunk, HttpFields trailers)
 }
 
 /*
+ * flow: receive a chunk
+ */
+void receiveChunk(StringBuffer chunk, HttpFields trailers)
+{
+    call_out("_receiveChunk", 0, chunk, trailers, previous_object());
+}
+
+/*
  * receive entity
  */
-void receiveEntity(StringBuffer entity)
+static void _receiveEntity(StringBuffer entity, object prev)
 {
-    if (previous_object() == connection) {
+    if (prev == connection) {
 	call(nil, response, handle[0], handle[1 ..], entity);
     }
+}
+
+/*
+ * flow: receive entity
+ */
+static void receiveEntity(StringBuffer entity)
+{
+    call_out("_receiveEntity", 0, entity, previous_object());
 }
 
 /*
@@ -297,12 +321,20 @@ static void respond(string context, int code, StringBuffer entity,
 /*
  * receive WebSocket frame
  */
-void receiveWsFrame(int opcode, int flags, int len)
+static void _receiveWsFrame(int opcode, int flags, int len, object prev)
 {
-    if (previous_object() == connection) {
+    if (prev == connection) {
 	::opcode = opcode;
 	::flags = flags;
     }
+}
+
+/*
+ * flow: receive WebSocket frame
+ */
+void receiveWsFrame(int opcode, int flags, int len)
+{
+    call_out("_receiveWsFrame", 0, opcode, flags, len, previous_object());
 }
 
 /*
@@ -346,7 +378,7 @@ private void receiveWsResponse(StringBuffer chunk)
 /*
  * receive WebSocket chunk
  */
-void receiveWsChunk(StringBuffer chunk)
+static void _receiveWsChunk(StringBuffer chunk, object prev)
 {
     int c, offset;
     string buf;
@@ -393,6 +425,14 @@ void receiveWsChunk(StringBuffer chunk)
 }
 
 /*
+ * flow: receive WebSocket chunk
+ */
+void receiveWsChunk(StringBuffer chunk)
+{
+    call_out("_receiveWsChunk", 0, chunk, previous_object());
+}
+
+/*
  * finished handling response
  */
 static void doneResponse()
@@ -409,11 +449,19 @@ static void doneResponse()
 /*
  * finished sending chunk
  */
-void doneChunk()
+static void _doneChunk(object prev)
 {
-    if (previous_object() == connection && opcode == WEBSOCK_CLOSE) {
+    if (prev == connection && opcode == WEBSOCK_CLOSE) {
 	connection->terminate();
     }
+}
+
+/*
+ * flow: finished sending chunk
+ */
+void doneChunk()
+{
+    call_out("_doneChunk", 0, previous_object());
 }
 
 /*
@@ -437,9 +485,17 @@ static void close()
 /*
  * cleanup after TLS connection ends
  */
-void disconnected()
+static void _disconnected(object prev)
 {
-    if (previous_object() == connection) {
+    if (prev == connection) {
 	close();
     }
+}
+
+/*
+ * flow: cleanup after TLS connection ends
+ */
+void disconnected()
+{
+    call_out("_disconnected", 0, previous_object());
 }

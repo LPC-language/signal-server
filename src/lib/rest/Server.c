@@ -285,12 +285,12 @@ static void authCall(string context, string accountId, int deviceId,
 /*
  * handle a request
  */
-int receiveRequest(int code, HttpRequest request)
+static int _receiveRequest(int code, HttpRequest request, object prev)
 {
     string host, str;
     mixed length;
 
-    if (previous_object() == connection) {
+    if (prev == connection) {
 	::request = request;
 
 	if (code != 0) {
@@ -342,13 +342,29 @@ int receiveRequest(int code, HttpRequest request)
 }
 
 /*
+ * flow: handle a request
+ */
+int receiveRequest(int code, HttpRequest request)
+{
+    call_out("_receiveRequest", 0, code, request, previous_object());
+}
+
+/*
  * receive entity
+ */
+static void _receiveEntity(StringBuffer entity, object prev)
+{
+    if (prev == connection) {
+	call(nil, request, entity, handle);
+    }
+}
+
+/*
+ * flow: receive entity
  */
 void receiveEntity(StringBuffer entity)
 {
-    if (previous_object() == connection) {
-	call(nil, request, entity, handle);
-    }
+    call_out("_receiveEntity", 0, entity, previous_object());
 }
 
 /*
@@ -380,12 +396,20 @@ static int upgradeToWebSocket(string service, string key, varargs string login,
 /*
  * receive WebSocket frame
  */
-void receiveWsFrame(int opcode, int flags, int len)
+static void _receiveWsFrame(int opcode, int flags, int len, object prev)
 {
-    if (previous_object() == connection) {
+    if (prev == connection) {
 	::opcode = opcode;
 	::flags = flags;
     }
+}
+
+/*
+ * receive WebSocket frame
+ */
+void receiveWsFrame(int opcode, int flags, int len)
+{
+    call_out("_receiveWsFrame", 0, opcode, flags, len, previous_object());
 }
 
 /*
@@ -411,12 +435,12 @@ private void receiveWsRequest(StringBuffer chunk)
 /*
  * receive WebSocket chunk
  */
-void receiveWsChunk(StringBuffer chunk)
+static void _receiveWsChunk(StringBuffer chunk, object prev)
 {
     int c, offset;
     string buf;
 
-    if (previous_object() == connection) {
+    if (prev == connection) {
 	if (opcode == WEBSOCK_CLOSE) {
 	    wsSendClose(connection, chunk->chunk());
 	} else if (websocket == "chat") {
@@ -458,17 +482,33 @@ void receiveWsChunk(StringBuffer chunk)
 }
 
 /*
+ * flow: receive WebSocket chunk
+ */
+void receiveWsChunk(StringBuffer chunk)
+{
+    call_out("_receiveWsChunk", 0, chunk, previous_object());
+}
+
+/*
  * finished sending response
  */
-void doneChunk()
+static void _doneChunk(object prev)
 {
-    if (previous_object() == connection) {
+    if (prev == connection) {
 	if (!websocket) {
 	    connection->doneRequest();
 	} else if (opcode == WEBSOCK_CLOSE) {
 	    connection->terminate();
 	}
     }
+}
+
+/*
+ * flow: finished sending response
+ */
+void doneChunk()
+{
+    call_out("_doneChunk", 0, previous_object());
 }
 
 /*
@@ -492,9 +532,17 @@ static void close()
 /*
  * cleanup after TLS connection ends
  */
-void disconnected()
+static void _disconnected(object prev)
 {
-    if (previous_object() == connection) {
+    if (prev == connection) {
 	close();
     }
+}
+
+/*
+ * cleanup after TLS connection ends
+ */
+void disconnected()
+{
+    call_out("_disconnected", 0, previous_object());
 }

@@ -34,17 +34,25 @@ private inherit "/lib/util/random";
 private inherit base64 "/lib/util/base64";
 
 
-int connected;	/* connection established? */
-string key;	/* websocket key */
+# define TLS_CLIENT_SESSION	"/usr/MsgServer/benchmark/lib/TlsClientSession"
+# define BENCHMARK		"/usr/MsgServer/benchmark/sys/benchmark"
+
+string accountId;	/* account connected to */
+string password;	/* account password */
+string key;		/* websocket key */
 
 /*
  * create client of simulated connection
  */
-static void create(string host, object serverSim, string clientSimPath)
+static void create(string host, object serverSim, string clientSimPath,
+		   string accountId, string password)
 {
     object clientSim;
 
-    clientSim = ::create(host, 443, "created", clientSimPath);
+    ::accountId = accountId;
+    ::password = password;
+    clientSim = ::create(host, 443, "created", clientSimPath,
+			 TLS_CLIENT_SESSION);
     serverSim->startConnection(clientSim);
     clientSim->startConnection(serverSim);
 }
@@ -55,18 +63,17 @@ static void create(string host, object serverSim, string clientSimPath)
 static void created(int status)
 {
     if (status == HTTP_OK) {
-	connected = TRUE;
+	call_out("start", 0);
+    } else {
+	error("Connection failed for " + accountId);
     }
 }
 
 /*
  * start websocket connection
  */
-int start(string accountId, string password)
+static void start()
 {
-    if (!connected || key) {
-	return FALSE;
-    }
     key = base64::encode(random_string(16));
     request("GET", CHAT_SERVER,
 	    "/v1/websocket/?login=" + accountId + "&password=" + password, nil,
@@ -78,8 +85,6 @@ int start(string accountId, string password)
 	    ]),
 	    "establish", argHeader("Connection"), argHeader("Upgrade"),
 	    argHeader("Sec-WebSocket-Accept"));
-
-    return TRUE;
 }
 
 /*
@@ -93,7 +98,7 @@ static void establish(string context, HttpResponse response, string connection,
 	accept == base64::encode(hash_string("SHA1", key + WEBSOCKET_GUID))) {
 	upgradeToWebSocket("chat");
     } else {
-	error("Websocket connection failed");
+	error("Websocket connection failed for " + accountId);
     }
 }
 
@@ -115,5 +120,20 @@ static void receiveMessage(string context, HttpRequest request)
 {
     respond(context, HTTP_OK, nil, nil);
 }
+
+/*
+ * run benchmark
+ */
+void benchmark(string *correspondents, varargs int n)
+{
+    sendMessage(correspondents[n]);
+    if (++n < sizeof(correspondents)) {
+	call_out("benchmark", 0, correspondents, n);
+    } else {
+	call_out_other(BENCHMARK, "done", 0);
+    }
+}
+
+string accountId()	{ return accountId; }
 
 # endif
