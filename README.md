@@ -27,12 +27,12 @@ registration service and CDSI.
 
 `signal-server` has the following dependencies:
 
--   [DGD](https://github.com/dworkin/dgd) 1.7.5 or
-    [Hydra](https://www.dworkin.nl/hydra) 1.3.37  
+-   [DGD](https://github.com/dworkin/dgd) 1.7.6 or
+    [Hydra](https://www.dworkin.nl/hydra) 1.3.40  
     The LPC compiler, runtime and database management system.
--   [cloud-server](https://github.com/dworkin/cloud-server) 1.1  
+-   [cloud-server](https://github.com/dworkin/cloud-server) 1.2  
     The basic LPC framework providing HTTP and TLS support.
--   [LPC extension modules](https://github.com/dworkin/lpc-ext) 1.4.8  
+-   [LPC extension modules](https://github.com/dworkin/lpc-ext) 1.5  
     The `crypto` extension module is required for TLS.  Not required but highly
     recommended is the `jit` extension module for JIT compiler support.
 -   [libsignal extension module](https://github.com/LPC-language/libsignal)  
