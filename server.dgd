@@ -9,7 +9,7 @@ swap_size	= 1048576;		/* # sectors in swap file */
 sector_size	= 8192;			/* swap sector size */
 swap_fragment	= 40960;		/* fragment to swap out */
 static_chunk	= 64512;		/* static memory chunk */
-dynamic_chunk	= 261120;		/* dynamic memory chunk */
+dynamic_chunk	= 130048;		/* dynamic memory chunk */
 dump_file	= "../state/snapshot";	/* snapshot file */
 dump_interval	= 86400;		/* snapshot rebuild interval */
 hotboot		= ({
@@ -20,10 +20,10 @@ hotboot		= ({
 		  });
 modules		= ([
 # if 0					/* enable for JIT compilation */
-		    "../../lpc-ext/jit.1.4" : "../../lpc-ext/src/jit",
+		    "../../lpc-ext/jit.1.5" : "../../lpc-ext/src/jit",
 # endif
-		    "../../lpc-ext/crypto.1.4" : "",
-		    "../../lpc-ext/libsignal.1.4" : ""
+		    "../../lpc-ext/crypto.1.5" : "",
+		    "../../lpc-ext/libsignal.1.5" : ""
 		  ]);
 
 typechecking	= 2;			/* global typechecking */
