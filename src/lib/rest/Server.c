@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -344,7 +344,7 @@ static int _receiveRequest(int code, HttpRequest request, object prev)
 /*
  * flow: handle a request
  */
-int receiveRequest(int code, HttpRequest request)
+void receiveRequest(int code, HttpRequest request)
 {
     call_out("_receiveRequest", 0, code, request, previous_object());
 }
