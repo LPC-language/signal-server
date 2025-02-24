@@ -183,6 +183,9 @@ running 32 bit binaries must be enabled on the host, a 32 bit compiler must
 be installed, and all modules (`crypto`, `libsignal`, optionally `jit`) must
 be compiled as 32 bit binaries, using something like `make CC='cc -m32'`.
 
+Pre-built 32 bit modules for linux-i386 are available
+[here](https://download.dworkin.nl/hydra/ext).
+
 ## Running the server
 
 DGD was originally made for
