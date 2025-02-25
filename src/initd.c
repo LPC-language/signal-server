@@ -57,4 +57,12 @@ static void create()
     compile_object("sys/online");
     compile_object("sys/messages");
     compile_object("services/obj/server");
+
+    /* for benchmarking */
+    compile_object("benchmark/lib/TlsClientSession");
+    compile_object("benchmark/obj/client");
+    compile_object("benchmark/obj/sim_client");
+    compile_object("benchmark/obj/sim_server");
+    compile_object("benchmark/obj/sim_tls_client");
+    compile_object("benchmark/obj/sim_tls_server");
 }
