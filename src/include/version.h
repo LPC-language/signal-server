@@ -1,0 +1,1 @@
+# define LPC_SIGNAL_SERVER_VERSION	"0.9"
