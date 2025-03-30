@@ -105,7 +105,8 @@ all git repositories are checked out side by side.
     registration process.  It will take a day or so to activate your account,
     so start with this.
 2.  Git checkout https://github.com/dworkin/dgd.git, and run `make
-    DEFINES='-DEINDEX_TYPE="unsigned short" -DEINDEX_MAX=USHRT_MAX' install`
+    DEFINES='-DUINDEX_TYPE="unsigned int" -DUINDEX_MAX=UINT_MAX
+    -DEINDEX_TYPE="unsigned short" -DEINDEX_MAX=USHRT_MAX' install`
     in `dgd/src` to create `dgd/bin/dgd`.  Build requires a yacc-compatible
     parser generator such as bison or byacc.
 3.  Git checkout https://github.com/dworkin/lpc-ext.git and run `make crypto`
