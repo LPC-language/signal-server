@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -130,7 +130,7 @@ void benchmark(string *correspondents, varargs int n)
     if (++n < sizeof(correspondents)) {
 	call_out("benchmark", 0, correspondents, n);
     } else {
-	call_out_other(BENCHMARK, "done", 0);
+	BENCHMARK->clientDone();
     }
 }
 

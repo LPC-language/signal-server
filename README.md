@@ -42,7 +42,7 @@ registration service and CDSI.
 
 The clients that match Signal-Server v9.60 are
 [Signal-Android](https://github.com/signalapp/Signal-Android) v6.20.6 and
-[Signal-iOS](https://github.com/signalapp/Signal-iOS) 6.23.1.0.  Only
+[Signal-iOS](https://github.com/signalapp/Signal-iOS) 6.24.0.9.  Only
 [signal-android](https://github.com/LPC-language/signal-android) is supported
 for now, with minimal changes made.
 

@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -162,11 +162,20 @@ void setup(int num)
 }
 
 /*
+ * a client has finised
+ */
+void clientDone()
+{
+    call_out_summand("done", 0, 1.0);
+}
+
+/*
  * count finished clients
  */
-void done()
+static void done(float number)
 {
-    if (++counter == SENDERS) {
+    counter += (int) number;
+    if (counter == SENDERS) {
 	user->message("Done " + ctime(time()) + "\n");
 	counter = 0;
     }
