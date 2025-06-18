@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,26 +16,4 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# ifdef REGISTER
-
-register(CHAT_SERVER, "GET", "/v1/config",
-	 "getConfig", argHeaderOptAuth());
-
-# else
-
-# include "~HTTP/HttpResponse.h"
-# include "rest.h"
-# include "account.h"
-
-inherit RestServer;
-
-
-/*
- * default configuration
- */
-static int getConfig(string context, Account account, Device device)
-{
-    return respondJson(context, HTTP_OK, ([ "config" : ({ }) ]));
-}
-
-# endif
+# define PROVISIONING	"/usr/MsgServer/sys/provisioning"

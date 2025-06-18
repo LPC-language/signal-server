@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -24,16 +24,22 @@ register(CHAT_SERVER, "GET", "/v1/websocket/",
 register(CHAT_SERVER, "GET", "/v1/websocket/{}",
 	 "getWebsocketLogin", argHeader("Upgrade"), argHeader("Connection"),
 	 argHeader("Sec-WebSocket-Key"), argHeader("Sec-WebSocket-Version"));
+register(CHAT_SERVER, "GET", "/v1/websocket/provisioning/{}",
+	 "getWebsocketProvisioning", argHeader("Upgrade"),
+	 argHeader("Connection"), argHeader("Sec-WebSocket-Key"),
+	 argHeader("Sec-WebSocket-Version"));
 
 # else
 
 # include <String.h>
 # include <Continuation.h>
+# include "~HTTP/HttpConnection.h"
 # include "~HTTP/HttpResponse.h"
 # include "~HTTP/HttpField.h"
 # include "rest.h"
 # include "account.h"
 # include "messages.h"
+# include "provisioning.h"
 # include <type.h>
 
 inherit RestServer;
@@ -41,8 +47,10 @@ private inherit base64 "/lib/util/base64";
 private inherit json "/lib/util/json";
 private inherit "/lib/util/random";
 private inherit uuid "~/lib/uuid";
+private inherit "~/lib/proto";
 
-private mapping outgoing;	/* context : callback */
+mapping outgoing;		/* context : callback */
+int provisioningDone;		/* provisioning finished */
 
 /*
  * initialize websocket layer
@@ -69,6 +77,12 @@ static int getWebsocketLogin(string context, string param, string upgrade,
     string login, password, id;
     int deviceId;
 
+    if (sscanf(param, "?agent=%*s&version=%s", param) == 2) {
+	if (sscanf(param, "%*s&%s", param) != 2) {
+	    return getWebsocket(context, upgrade, connection, key, version);
+	}
+	param = "?" + param;
+    }
     if (sscanf(param, "?login=%s&password=%s", login, password) != 2) {
 	return respond(context, HTTP_BAD_REQUEST, nil, nil);
     }
@@ -144,6 +158,11 @@ static void chatReceiveResponse(StringBuffer chunk)
     StringBuffer entity;
     mixed *handle;
 
+    if (provisioningDone) {
+	sendClose(WEBSOCK_STATUS_1000 + "OK");
+	return;
+    }
+
     ({ context, response, entity }) = wsReceiveResponse(chunk);
 
     handle = outgoing[context];
@@ -171,6 +190,37 @@ static void chatReceiveResponse(StringBuffer chunk)
 
 	handle[0]->runNext(response->code(), args...);
     }
+}
+
+static int getWebsocketProvisioning(string context, string param,
+				    string upgrade, string connection,
+				    string key, string version)
+{
+    int code;
+    string provisioningAddr;
+
+    if (sscanf(param, "?agent=%*s&version=%*s") == 2) {
+	code = getWebsocket(context, upgrade, connection, key, version);
+	if (code == HTTP_SWITCHING_PROTOCOLS) {
+	    provisioningAddr = base64::urlEncode(secure_random(16));
+	    if (!find_object(PROVISIONING)) {
+		compile_object(PROVISIONING);
+	    }
+	    PROVISIONING->addEndpoint(provisioningAddr, this_object());
+	    provisioningAddr = "\12" + protoString(provisioningAddr);
+	    chatSendRequest("PUT", "/v1/address",
+			    new StringBuffer(provisioningAddr), nil, nil);
+	}
+	return code;
+    } else {
+	return respond(context, HTTP_BAD_REQUEST, nil, nil);
+    }
+}
+
+void provisioningMessage(string message)
+{
+    chatSendRequest("PUT", "/v1/message", new StringBuffer(message), nil, nil);
+    provisioningDone = TRUE;
 }
 
 # endif

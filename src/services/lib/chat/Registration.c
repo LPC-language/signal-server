@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -49,7 +49,6 @@ private inherit "/lib/util/random";
 private inherit "/lib/util/ascii";
 private inherit base64 "/lib/util/base64";
 private inherit hex "/lib/util/hex";
-private inherit json "/lib/util/json";
 private inherit uuid "~/lib/uuid";
 
 

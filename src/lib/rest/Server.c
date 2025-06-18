@@ -130,6 +130,12 @@ static int respond(string context, int code, string type, StringBuffer entity,
     request = nil;
     handle = nil;
     if (websocket) {
+	if (type) {
+	    if (!extraHeaders) {
+		extraHeaders = ([ ]);
+	    }
+	    extraHeaders["Content-Type"] = type;
+	}
 	sendChunk(wsResponse(context, code, entity, extraHeaders));
     } else {
 	httpRespond(code, type, entity, extraHeaders);
@@ -368,6 +374,15 @@ void receiveEntity(StringBuffer entity)
 }
 
 /*
+ * authenticate for an account
+ */
+static void authenticate(string login, string password)
+{
+    ::login = login;
+    ::password = password;
+}
+
+/*
  * upgrade connection to WebSocket protocol
  */
 static int upgradeToWebSocket(string service, string key, varargs string login,
@@ -383,8 +398,7 @@ static int upgradeToWebSocket(string service, string key, varargs string login,
     ]));
 
     websocket = service;
-    ::login = login;
-    ::password = password;
+    authenticate(login, password);
 
     if (connection) {
 	connection->expectWsFrame();
@@ -540,7 +554,7 @@ static void _disconnected(object prev)
 }
 
 /*
- * cleanup after TLS connection ends
+ * flow: cleanup after TLS connection ends
  */
 void disconnected()
 {

@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -133,7 +133,7 @@ static StringBuffer wsRequest(string verb, string path, StringBuffer body,
 	values = map_values(extraHeaders);
 	for (sz = sizeof(indices), i = 0; i < sz; i++) {
 	    request->append(
-		"\52" + protoString(indices[i] + ": " +
+		"\52" + protoString(indices[i] + ":" +
 				    ((typeof(values[i]) == T_ARRAY) ?
 				      values[i][0] : values[i]))
 	    );
@@ -168,7 +168,7 @@ static StringBuffer wsResponse(string context, int code, StringBuffer entity,
 	values = map_values(extraHeaders);
 	for (sz = sizeof(indices), i = 0; i < sz; i++) {
 	    response->append(
-		"\52" + protoString(indices[i] + ": " +
+		"\52" + protoString(indices[i] + ":" +
 				    ((typeof(values[i]) == T_ARRAY) ?
 				      values[i][0] : values[i]))
 	    );

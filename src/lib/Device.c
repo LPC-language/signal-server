@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+# include "Timestamp.h"
 
 private inherit "hash";
 
@@ -44,6 +46,16 @@ private string pniPreKey;
 private string pniPkSignature;
 private string gcmId;
 private int cap;		/* capabilities */
+private Timestamp created;
+private Timestamp lastSeen;
+
+void setLastSeen()
+{
+    if (!created) {
+	created = new Timestamp;
+    }
+    lastSeen = new Timestamp(time(), TRUE);
+}
 
 /*
  * initialize device
@@ -52,6 +64,7 @@ static void create(int id, string password)
 {
     ::id = id;
     ({ authToken, salt }) = hash(password);
+    setLastSeen();
 }
 
 void update(string name, int registrationId, string agent, int fetchesMessages,
@@ -77,6 +90,7 @@ void update(string name, int registrationId, string agent, int fetchesMessages,
 
 int verifyPassword(string password)
 {
+    setLastSeen();
     return (authToken == hash(password, salt)[0]);
 }
 
@@ -154,3 +168,5 @@ int capSenderKey()		{ return (cap >> SENDER_KEY) & 1; }
 int capStorage()		{ return (cap >> STORAGE) & 1; }
 int capStories()		{ return (cap >> STORIES) & 1; }
 int capUuid()			{ return (cap >> UUID) & 1; }
+Timestamp created()		{ return created; }
+Timestamp lastSeen()		{ return lastSeen; }

@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -48,7 +48,7 @@ static void create(object origin, string sourceId, int sourceDeviceId, int type,
     ::origin = origin;
     ::sourceDeviceId = sourceDeviceId;
     ::content = content;
-    guid = random_string(16);
+    guid = uuid::generate();
     serverTimestamp = new Timestamp();
     ::sourceId = sourceId;
     ::destinationId = destinationId;

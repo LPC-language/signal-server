@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,6 +21,7 @@
 # include "services.h"
 
 private inherit "/lib/util/random";
+private inherit uuid "~/lib/uuid";
 private inherit "~/lib/phone";
 
 
@@ -48,7 +49,7 @@ atomic void add(Account account)
     string accountId, username;
 
     for (;;) {
-	accountId = random_string(16);
+	accountId = uuid::generate();
 	try {
 	    accounts->add(accountId, account);
 	} catch (...) {

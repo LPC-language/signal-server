@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -20,8 +20,23 @@
 # include "zkp.h"
 # include "params.h"
 
+private inherit "/lib/util/random";
 private inherit hex "/lib/util/hex";
 
+
+/*
+ * generate a UUID
+ */
+static string generate()
+{
+    string uuid;
+
+    uuid = random_string(16);
+    uuid[6] = 0x40 + (uuid[6] & 0x0f);
+    uuid[8] = 0x80 + (uuid[8] & 0x3f);
+
+    return uuid;
+}
 
 /*
  * encode as UUID

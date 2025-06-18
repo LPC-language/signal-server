@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -76,9 +76,32 @@ void setId(string id)
     }
 }
 
+int nextDeviceId()
+{
+    int max, id;
+
+    max = map_sizeof(devices) + 1;
+    for (id = 1; id < max; id++) {
+	if (!devices[id]) {
+	    break;
+	}
+    }
+    return id;
+}
+
+void addDevice(Device device)
+{
+    devices[device->id()] = device;
+}
+
 Device device(int deviceId)
 {
     return devices[deviceId];
+}
+
+Device *devices()
+{
+    return map_values(devices);
 }
 
 void updateIdentityKey(string key)

@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,24 +18,36 @@
 
 # ifdef REGISTER
 
-register(CHAT_SERVER, "GET", "/v1/config",
-	 "getConfig", argHeaderOptAuth());
+register(CHAT_SERVER, "PUT", "/v1/provisioning/{}", "putProvisioning",
+	 argHeaderAuth(), argEntityJson());
 
 # else
 
 # include "~HTTP/HttpResponse.h"
 # include "rest.h"
 # include "account.h"
+# include "provisioning.h"
 
 inherit RestServer;
+private inherit base64 "/lib/util/base64";
+private inherit "~/lib/proto";
 
 
-/*
- * default configuration
- */
-static int getConfig(string context, Account account, Device device)
+static int putProvisioning(string context, string address, Account account,
+			   Device device, mapping entity)
 {
-    return respondJson(context, HTTP_OK, ([ "config" : ({ }) ]));
+    string body;
+    object endpoint;
+
+    body = entity["body"];
+    endpoint = PROVISIONING->getEndpoint(address);
+    if (body && endpoint) {
+	call_out_other(endpoint, "provisioningMessage", 0,
+		       base64::decode(body));
+	return respondJsonOK(context);
+    } else {
+	return respond(context, HTTP_NOT_FOUND, nil, nil);
+    }
 }
 
 # endif

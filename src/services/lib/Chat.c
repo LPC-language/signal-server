@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -33,6 +33,8 @@
 # include "chat/Storage.c"
 # include "chat/Directory.c"
 # include "chat/Messages.c"
+# include "chat/Devices.c"
+# include "chat/Provisioning.c"
 
 # else
 
@@ -47,5 +49,7 @@ inherit "chat/Backup";
 inherit "chat/Storage";
 inherit "chat/Directory";
 inherit "chat/Messages";
+inherit "chat/Devices";
+inherit "chat/Provisioning";
 
 # endif
