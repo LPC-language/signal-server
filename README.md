@@ -27,10 +27,10 @@ registration service and CDSI.
 
 `signal-server` has the following dependencies:
 
--   [DGD](https://github.com/dworkin/dgd) 1.7.6 or
-    [Hydra](https://www.dworkin.nl/hydra) 1.3.40  
+-   [DGD](https://github.com/dworkin/dgd) 1.7.7 or
+    [Hydra](https://www.dworkin.nl/hydra) 1.3.41  
     The LPC compiler, runtime and database management system.
--   [cloud-server](https://github.com/dworkin/cloud-server) 1.2  
+-   [cloud-server](https://github.com/dworkin/cloud-server) 1.2.1  
     The basic LPC framework providing HTTP and TLS support.
 -   [LPC extension modules](https://github.com/dworkin/lpc-ext) 1.5  
     The `crypto` extension module is required for TLS.  Not required but highly
@@ -41,9 +41,11 @@ registration service and CDSI.
     3.0.0-lizard2.
 
 The clients that match Signal-Server v9.60 are
-[Signal-Android](https://github.com/signalapp/Signal-Android) v6.20.6 and
-[Signal-iOS](https://github.com/signalapp/Signal-iOS) 6.24.0.9.  Only
-[signal-android](https://github.com/LPC-language/signal-android) is supported
+[Signal-Android](https://github.com/signalapp/Signal-Android) v6.20.6,
+[Signal-iOS](https://github.com/signalapp/Signal-iOS) 6.24.0.9 and
+[Signal-Desktop](https://github.com/signalapp/Signal-Desktop) v6.18.1.  Only
+[signal-android](https://github.com/LPC-language/signal-android) and
+[signal-desktop](https://github.com/LPC-language/signal-desktop) are supported
 for now, with minimal changes made.
 
 ## Disclaimers
@@ -182,7 +184,8 @@ A free, 32 bit binary of Hydra can be downloaded
 [here](https://download.dworkin.nl/hydra).  To use it for `signal-server`,
 running 32 bit binaries must be enabled on the host, a 32 bit compiler must
 be installed, and all modules (`crypto`, `libsignal`, optionally `jit`) must
-be compiled as 32 bit binaries, using something like `make CC='cc -m32'`.
+be compiled as 32 bit binaries, using something like `make CC='cc -m32'`.  Note
+that JIT compilation also requires a 32-bit version of Clang to be installed.
 
 Pre-built 32 bit modules for linux-i386 are available
 [here](https://download.dworkin.nl/hydra/ext).

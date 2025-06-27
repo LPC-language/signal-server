@@ -21,7 +21,6 @@
  */
 static void create()
 {
-    compile_object("lib/TlsClientSession");
     compile_object("lib/KVstoreExp");
     compile_object("lib/KVstoreObj");
     compile_object("lib/Device");
@@ -68,4 +67,28 @@ static void create()
     compile_object("benchmark/obj/sim_server");
     compile_object("benchmark/obj/sim_tls_client");
     compile_object("benchmark/obj/sim_tls_server");
+}
+
+/*
+ * handle an upgrade
+ */
+int upgrade()
+{
+    if (!find_object("sys/provisioning")) {
+	/*
+	 * 0.9 => 0.9.1
+	 */
+	destruct_object("sys/params");
+	destruct_object("sys/credentials");
+	compile_object("lib/protocol/AuthCredentialWithPniResponse");
+	compile_object("lib/protocol/CallLinkAuthCredentialResponse");
+	compile_object("sys/params");
+	compile_object("sys/credentials");
+	compile_object("sys/provisioning");
+    }
+
+    destruct_object("sys/rest_api");
+    compile_object("sys/rest_api");
+
+    return TRUE;
 }
