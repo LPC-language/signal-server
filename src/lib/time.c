@@ -16,10 +16,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# define ProfileKeyCommitment			object "/usr/MsgServer/lib/protocol/ProfileKeyCommitment"
-# define RemoteProfileKeyCommitment		object "/usr/MsgServer/lib/protocol/RemoteProfileKeyCommitment"
-# define ProfileKeyCredentialRequest		object "/usr/MsgServer/lib/protocol/ProfileKeyCredentialRequest"
-# define RemoteProfileKeyCredentialRequest	object "/usr/MsgServer/lib/protocol/RemoteProfileKeyCredentialRequest"
-# define ProfileKeyCredentialResponse		object "/usr/MsgServer/lib/protocol/ProfileKeyCredentialResponse"
-# define AuthCredentialWithPniResponse		object "/usr/MsgServer/lib/protocol/AuthCredentialWithPniResponse"
-# define CallLinkAuthCredentialResponse		object "/usr/MsgServer/lib/protocol/CallLinkAuthCredentialResponse"
+# include "zkp.h"
+# include "Sho.h"
+# include "params.h"
+# include "credentials.h"
+
+private inherit asn "/lib/util/asn";
+
+
+/*
+ * time in seconds encoded in 8 bytes, big endian
+ */
+static string timeBytes(int time)
+{
+    return asn::unsignedExtend(asn::extend(asn::encode(time), 4), 8);
+}
+
+/*
+ * get a scalar from a time
+ */
+static Scalar timeScalar(int time)
+{
+    Sho sho;
+
+    sho = PARAMS->timeSho();
+    sho->absorb(timeBytes(time));
+    sho->ratchet();
+    return sho->getScalar();
+}
+
+/*
+ * time % 86400, where time can be negative
+ */
+static int timeDay(int time)
+{
+    time >>= 7;
+    return (time - time % 675) << 7;
+}

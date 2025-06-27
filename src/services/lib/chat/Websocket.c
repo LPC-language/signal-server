@@ -203,9 +203,6 @@ static int getWebsocketProvisioning(string context, string param,
 	code = getWebsocket(context, upgrade, connection, key, version);
 	if (code == HTTP_SWITCHING_PROTOCOLS) {
 	    provisioningAddr = base64::urlEncode(secure_random(16));
-	    if (!find_object(PROVISIONING)) {
-		compile_object(PROVISIONING);
-	    }
 	    PROVISIONING->addEndpoint(provisioningAddr, this_object());
 	    provisioningAddr = "\12" + protoString(provisioningAddr);
 	    chatSendRequest("PUT", "/v1/address",

@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -42,6 +42,7 @@ inherit RestServer;
 private inherit base64 "/lib/util/base64";
 private inherit hex "/lib/util/hex";
 private inherit uuid "~/lib/uuid";
+private inherit "~/lib/time";
 private inherit "~TLS/api/lib/hkdf";
 
 
@@ -178,7 +179,6 @@ static mapping getProfileKeyCredential2(string uuid, string version,
     Profile profile;
     ProfileKeyCommitment commitment;
     ProfileKeyCredentialRequest request;
-    int expirationTime;
     ProfileKeyCredentialResponse response;
     mapping reply;
 
@@ -189,11 +189,8 @@ static mapping getProfileKeyCredential2(string uuid, string version,
     request = new RemoteProfileKeyCredentialRequest(commitment,
 						    credentialRequest);
 
-    expirationTime = (time() + 7 * 86400) >> 7;
-    expirationTime -= expirationTime % 675;
-    expirationTime <<= 7;
     response = new ProfileKeyCredentialResponse(request, accountId,
-						expirationTime,
+						timeDay(time()) + 7 * 86400,
 						secure_random(32));
 
     reply = baseProfileResponse(account, uuid) +

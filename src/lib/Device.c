@@ -67,6 +67,22 @@ static void create(int id, string password)
     setLastSeen();
 }
 
+void updateCapabilities(int announcementGroup, int changeNumber, int giftBadges,
+			int paymentActivation, int pni, int senderKey,
+			int storage, int stories, int uuid)
+{
+    cap &= TRUE <<		FETCHES_MESSAGES;
+    cap |= announcementGroup <<	ANNOUNCEMENT_GROUP;
+    cap |= changeNumber <<	CHANGE_NUMBER;
+    cap |= giftBadges <<	GIFT_BADGES;
+    cap |= paymentActivation <<	PAYMENT_ACTIVATION;
+    cap |= pni <<		PNI;
+    cap |= senderKey <<		SENDER_KEY;
+    cap |= storage <<		STORAGE;
+    cap |= stories <<		STORIES;
+    cap |= uuid <<		UUID;
+}
+
 void update(string name, int registrationId, string agent, int fetchesMessages,
 	    int capAnnouncementGroup, int capChangeNumber, int capGiftBadges,
 	    int capPaymentActivation, int capPni, int capSenderKey,
@@ -75,17 +91,10 @@ void update(string name, int registrationId, string agent, int fetchesMessages,
     ::name = name;
     ::registrationId = registrationId;
     ::agent = agent;
-    cap = 0;
-    cap |= fetchesMessages <<		FETCHES_MESSAGES;
-    cap |= capAnnouncementGroup <<	ANNOUNCEMENT_GROUP;
-    cap |= capChangeNumber <<		CHANGE_NUMBER;
-    cap |= capGiftBadges <<		GIFT_BADGES;
-    cap |= capPaymentActivation <<	PAYMENT_ACTIVATION;
-    cap |= capPni <<			PNI;
-    cap |= capSenderKey <<		SENDER_KEY;
-    cap |= capStorage <<		STORAGE;
-    cap |= capStories <<		STORIES;
-    cap |= capUuid <<			UUID;
+    cap = fetchesMessages << FETCHES_MESSAGES;
+    updateCapabilities(capAnnouncementGroup, capChangeNumber, capGiftBadges,
+		       capPaymentActivation, capPni, capSenderKey, capStorage,
+		       capStories, capUuid);
 }
 
 int verifyPassword(string password)

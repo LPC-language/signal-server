@@ -24,6 +24,10 @@ register(CHAT_SERVER, "GET", "/v1/devices/provisioning/code",
 register(CHAT_SERVER, "PUT", "/v1/devices/{}",
 	 "putDevicesCode", argHeader("Authorization"),
 	 argHeader("X-Signal-Agent"), argEntityJson());
+register(CHAT_SERVER, "PUT", "/v1/devices/unauthenticated_delivery",
+	 "putDevicesUnauthenticatedDelivery", argHeaderAuth());
+register(CHAT_SERVER, "PUT", "/v1/devices/capabilities",
+	 "putDevicesCapabilities", argHeaderAuth(), argEntityJson());
 
 # else
 
@@ -101,11 +105,10 @@ static void putDevicesCode2(string context, string phoneNumber, string password,
 
     account = ACCOUNT_SERVER->getByNumber(phoneNumber);
     uuid = uuid::encode(account->id());
-    authenticate(uuid, password);
+    deviceId = account->nextDeviceId();
+    authenticate(uuid + "." + deviceId, password);
 
     capabilities = entity["capabilities"];
-
-    deviceId = account->nextDeviceId();
     device = new Device(deviceId, password);
     device->update(entity["name"], entity["registrationId"], agent,
 		   entity["fetchesMessages"], capabilities["announcementGroup"],
@@ -119,6 +122,22 @@ static void putDevicesCode2(string context, string phoneNumber, string password,
 	"pni" : uuid::encode(account->pni()),
 	"deviceId" : deviceId
     ]));
+}
+
+static int putDevicesUnauthenticatedDelivery(string context, Account account,
+					     Device device)
+{
+    return respond(context, HTTP_OK, nil, nil);
+}
+
+static int putDevicesCapabilities(string context, Account account,
+				  Device device, mapping entity)
+{
+    device->updateCapabilities(entity["announcementGroup"],
+			       entity["changeNumber"], entity["giftBadges"],
+			       FALSE, entity["pni"], entity["senderKey"],
+			       FALSE, entity["stories"], FALSE);
+    return respond(context, HTTP_OK, nil, nil);
 }
 
 # endif

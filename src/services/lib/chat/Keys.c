@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -20,7 +20,11 @@
 
 register(CHAT_SERVER, "PUT", "/v2/keys/?identity=aci",
 	 "putKeysAci", argHeaderAuth(), argEntityJson());
+register(CHAT_SERVER, "PUT", "/v2/keys?identity=aci",
+	 "putKeysAci", argHeaderAuth(), argEntityJson());
 register(CHAT_SERVER, "PUT", "/v2/keys/?identity=pni",
+	 "putKeysPni", argHeaderAuth(), argEntityJson());
+register(CHAT_SERVER, "PUT", "/v2/keys?identity=pni",
 	 "putKeysPni", argHeaderAuth(), argEntityJson());
 register(CHAT_SERVER, "PUT", "/v2/keys/signed?identity=aci",
 	 "putKeysSignedAci", argHeaderAuth(), argEntityJson());

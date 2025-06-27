@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,51 +22,37 @@
 # include "credentials.h"
 # include "protocol.h"
 
-private inherit asn "/lib/util/asn";
 private inherit uuid "~/lib/uuid";
 private inherit "~/lib/time";
 
 
 private Scalar t;
 private RistrettoPoint U;
-private RistrettoPoint S1;
-private RistrettoPoint S2;
-private int expirationTime;
+private RistrettoPoint V;
 private string proof;
 
 /*
- * initialize (Expiring)ProfileKeyCredentialResponse
+ * initialize AuthCredentialWithPniResponse
  */
-static void create(ProfileKeyCredentialRequest request, string uuid,
-		   int expirationTime, string random)
+static void create(string uuid, string pni, int redemptionTime, string random)
 {
-    RistrettoPoint *M, publicKey, D1, D2, E1, E2, Vprime, M5, R1, R2;
+    RistrettoPoint *params, *M;
     Sho sho;
     KeyPair key;
-    Scalar rprime;
-    RistrettoPoint *params;
     Statement stmt;
     mapping scalarArgs, pointArgs;
 
-    M = uuid::points(uuid);
-    publicKey = request->publicKey();
-    ({ D1, D2, E1, E2 }) = request->cipherText();
-    ::expirationTime = expirationTime;
-    key = CREDENTIALS_SERVER->profileKeyCredentialKey();
+    params = PARAMS->credentialParams();
+    M = uuid::points(uuid) + uuid::points(pni) + ({
+	params[CRED_G_m5] * timeScalar(redemptionTime)
+    });
 
-    sho = PARAMS->profileKeyCredentialSho();
+    sho = PARAMS->authCredentialWithPniSho();
     sho->absorb(random);
     sho->ratchet();
-    ({ t, U, Vprime }) = key->prepare(sho, M);
-    rprime = sho->getScalar();
 
-    params = PARAMS->credentialParams();
-    M5 = params[CRED_G_m5] * timeScalar(expirationTime);
-
-    R1 = new RistrettoPoint(ristretto255_basepoint()) * rprime;
-    R2 = publicKey * rprime + Vprime + M5 * key->y()[4];
-    S1 = R1 + D1 * key->y()[2] + E1 * key->y()[3];
-    S2 = R2 + D2 * key->y()[2] + E2 * key->y()[3];
+    key = CREDENTIALS_SERVER->authCredentialWithPniKey();
+    ({ t, U, V }) = key->prepare(sho, M);
 
     stmt = new Statement;
     stmt->add("C_W",
@@ -80,19 +66,14 @@ static void create(ProfileKeyCredentialRequest request, string uuid,
 	      "y3", "G_y3",
 	      "y4", "G_y4",
 	      "y5", "G_y5");
-    stmt->add("S1",
-	      "y3", "D1",
-	      "y4", "E1",
-	      "rprime", "G");
-    stmt->add("S2",
-	      "y3", "D2",
-	      "y4", "E2",
-	      "rprime", "Y",
+    stmt->add("V",
 	      "w", "G_w",
 	      "x0", "U",
 	      "x1", "tU",
 	      "y1", "M1",
 	      "y2", "M2",
+	      "y3", "M3",
+	      "y4", "M4",
 	      "y5", "M5");
 
     scalarArgs = ([
@@ -104,8 +85,7 @@ static void create(ProfileKeyCredentialRequest request, string uuid,
 	"y2" : key->y()[1],
 	"y3" : key->y()[2],
 	"y4" : key->y()[3],
-	"y5" : key->y()[4],
-	"rprime" : rprime
+	"y5" : key->y()[4]
     ]);
     pointArgs = ([
 	"C_W" : key->C_W(),
@@ -119,18 +99,14 @@ static void create(ProfileKeyCredentialRequest request, string uuid,
 	"G_y3" : params[CRED_G_y + 2],
 	"G_y4" : params[CRED_G_y + 3],
 	"G_y5" : params[CRED_G_y + 4],
-	"S1" : S1,
-	"D1" : D1,
-	"E1" : E1,
-	"S2" : S2,
-	"D2" : D2,
-	"E2" : E2,
-	"Y" : publicKey,
+	"V" : V,
 	"U" : U,
 	"tU" : U * t,
 	"M1" : M[0],
 	"M2" : M[1],
-	"M5" : M5
+	"M3" : M[2],
+	"M4" : M[3],
+	"M5" : M[4]
     ]);
 
     proof = stmt->prove(scalarArgs, pointArgs, "", sho->squeeze(32));
@@ -141,15 +117,12 @@ static void create(ProfileKeyCredentialRequest request, string uuid,
  */
 string transport()
 {
-    return "\0" + t->bytes() + U->bytes() + S1->bytes() + S2->bytes() +
-	   asn::reverse(timeBytes(expirationTime)) +
-	   "\x60\1\0\0\0\0\0\0" + proof;
+    return "\0" + t->bytes() + U->bytes() + V->bytes() +
+	   "\x40\1\0\0\0\0\0\0" + proof;
 }
 
 
 Scalar t()		{ return t; }
 RistrettoPoint U()	{ return U; }
-RistrettoPoint S1()	{ return S1; }
-RistrettoPoint S2()	{ return S2; }
-int expirationTime()	{ return expirationTime; }
+RistrettoPoint V()	{ return V; }
 string proof()		{ return proof; }

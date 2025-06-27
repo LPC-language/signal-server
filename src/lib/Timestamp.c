@@ -20,6 +20,7 @@
 # include <type.h>
 
 inherit Time;
+private inherit "time";
 
 
 /*
@@ -31,8 +32,7 @@ static void create(varargs mixed val, int day)
     float mtime;
 
     if (day) {
-	time = val;
-	time -= ((time < 0) ? time - 0x7fffc470 : time) % 86400;
+	time = timeDay(val);
 	mtime = 0.0;
     } else {
 	switch (typeof(val)) {

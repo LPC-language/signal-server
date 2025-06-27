@@ -9,3 +9,4 @@
 # define VOIP_DEV_SERVER	"sfu.staging.test.voip.dworkin.nl"
 # define CONTENTPROXY_SERVER	"contentproxy.dworkin.nl"
 # define CAPTCHA_SERVER		"captchas.dworkin.nl"
+# define UPDATES_SERVER		"updates2.dworkin.nl"

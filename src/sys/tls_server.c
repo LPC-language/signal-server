@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -59,7 +59,8 @@ object select(string str)
 	    VOIP_TEST_SERVER,
 	    VOIP_DEV_SERVER,
 	    CONTENTPROXY_SERVER,
-	    CAPTCHA_SERVER
+	    CAPTCHA_SERVER,
+	    UPDATES_SERVER
 	}));
 	server->init(connection);
 	return connection;

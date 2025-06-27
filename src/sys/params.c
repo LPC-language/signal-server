@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -20,13 +20,18 @@
 # include "Sho.h"
 
 
-private RistrettoPoint *cParams;	/* credential params */
-private RistrettoPoint *pkcParams;	/* ProfileKeyCommitment param */
-private Sho ssSho;			/* ServerSecret sho */
-private Sho sSho;			/* signkey sho */
-private Sho pkcSho;			/* ProfileKeCredential sho */
-private Sho uuidSho;			/* uuid sho */
-private Sho timeSho;			/* Time Sho */
+RistrettoPoint *cParams;	/* credential params */
+RistrettoPoint *pkcParams;	/* ProfileKeyCommitment param */
+Sho ssSho;			/* ServerSecret sho */
+Sho gssSho;			/* GenericServerSecret sho */
+Sho sSho;			/* signkey sho */
+Sho pkcSho;			/* ProfileKeCredential sho */
+Sho acSho;			/* AuthCredentialPni sho */
+Sho apcSho;			/* AuthCredentialWithPni sho */
+Sho uuidSho;			/* uuid sho */
+Sho timeSho;			/* Time sho */
+Sho credSho;			/* credential sho */
+Sho clSho;			/* CallLinkAuthCredential sho *
 
 /*
  * initialize system parameters
@@ -74,17 +79,27 @@ static void create()
     });
 
     ssSho = new ShoHmacSha256("Signal_ZKGroup_20200424_Random_ServerSecretParams_Generate");
+    gssSho = new ShoHmacSha256("Signal_ZKCredential_CredentialPrivateKey_generate_20230410");
     sSho = new ShoHmacSha256("Signal_ZKGroup_20200424_Random_ServerSecretParams_Sign");
     pkcSho = new ShoHmacSha256("Signal_ZKGroup_20220508_Random_ServerSecretParams_IssueExpiringProfileKeyCredential");
+    acSho = new ShoHmacSha256("Signal_ZKGroup_20200424_Random_ServerSecretParams_IssueAuthCredential");
+    apcSho = new ShoHmacSha256("Signal_ZKGroup_20220617_Random_ServerSecretParams_IssueAuthCredentialWithPni");
     uuidSho = new ShoHmacSha256("Signal_ZKGroup_20200424_UID_CalcM1");
     timeSho = new ShoHmacSha256("Signal_ZKGroup_20220524_Timestamp_Calc_m");
+    credSho = new ShoHmacSha256("Signal_ZKCredential_Issuance_20230410");
+    clSho = new ShoHmacSha256("20230421_Signal_CallLinkAuthCredential");
 }
 
 
 RistrettoPoint *credentialParams()		{ return cParams[..]; }
 RistrettoPoint *profileKeyCommitmentParams()	{ return pkcParams[..]; }
 Sho serverSecretSho()				{ return ssSho->clone(); }
+Sho genericServerSecretSho()			{ return gssSho->clone(); }
 Sho signSho()					{ return sSho->clone(); }
 Sho profileKeyCredentialSho()			{ return pkcSho->clone(); }
+Sho authCredentialSho()				{ return acSho->clone(); }
+Sho authCredentialWithPniSho()			{ return apcSho->clone(); }
 Sho uuidSho()					{ return uuidSho->clone(); }
 Sho timeSho()					{ return timeSho->clone(); }
+Sho credentialSho()				{ return credSho->clone(); }
+Sho callLinkAuthCredentialSho()			{ return clSho->clone(); }

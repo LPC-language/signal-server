@@ -37,6 +37,7 @@ RistrettoPoint publicKey;
 KeyPair receiptCredentialKey;
 KeyPair profileKeyCredentialKey;
 KeyPair authCredentialWithPniKey;
+KeyPair credentialKey;
 
 /*
  * get public key from KeyPair
@@ -84,9 +85,14 @@ static void create()
 	   getPubKey(receiptCredentialKey) +
 	   getPubKey(unused2Key) +
 	   getPubKey(profileKeyCredentialKey) +
-	   getPubKey(authCredentialKey);
+	   getPubKey(authCredentialWithPniKey);
     remove_file(SERVER_PUBLIC_KEYS);
     write_file(SERVER_PUBLIC_KEYS, base64::encode("\0" + implode(keys, "")));
+
+    sho = PARAMS->genericServerSecretSho();
+    sho->absorb(generator);
+    sho->ratchet();
+    credentialKey = new KeyPair(sho, 7);
 }
 
 void initialize(string userDeriveKey, string key)
@@ -141,3 +147,4 @@ KeyPair authCredentialKey()		{ return authCredentialKey; }
 KeyPair receiptCredentialKey()		{ return receiptCredentialKey; }
 KeyPair profileKeyCredentialKey()	{ return profileKeyCredentialKey; }
 KeyPair authCredentialWithPniKey()	{ return authCredentialWithPniKey; }
+KeyPair credentialKey()			{ return credentialKey; }

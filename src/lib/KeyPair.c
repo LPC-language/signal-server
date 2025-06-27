@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -50,7 +50,8 @@ static void create(Sho sho, int size, varargs int nattr)
     for (i = 0; i < size; i++) {
 	y[i] = sho->getScalar();
     }
-    C_W = params[CRED_G_w] * w + params[CRED_G_wprime] * wprime;
+
+    C_W = W + params[CRED_G_wprime] * wprime;
     I = params[CRED_G_V] - params[CRED_G_x0] * x0 - params[CRED_G_x1] * x1;
     for (i = 0; i < nattr; i++) {
 	I -= params[CRED_G_y + i] * y[i];

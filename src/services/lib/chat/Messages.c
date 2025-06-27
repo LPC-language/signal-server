@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -54,12 +54,14 @@ static void chatSendRequest(string verb, string path, StringBuffer body,
 static void putMessages(string context, string uuid, Account account,
 			Device device, string accessKey, mapping entity)
 {
-    string story;
+    string story, destination;
 
     sscanf(uuid, "%s?story=%s", uuid, story);
+    destination = entity["destination"];
 
     call_out("putMessages2", 0, context,
-	     ACCOUNT_SERVER->get(uuid::decode(entity["destination"])),
+	     (destination) ?
+	      ACCOUNT_SERVER->get(uuid::decode(destination)) : account,
 	     account->id(), device->id(), entity["messages"],
 	     new Timestamp(entity["timestamp"]), entity["urgent"]);
 }
