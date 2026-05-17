@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024-2025 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2026 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,7 +22,6 @@
 static void create()
 {
     compile_object("lib/KVstoreExp");
-    compile_object("lib/KVstoreObj");
     compile_object("lib/Device");
     compile_object("lib/Account");
     compile_object("lib/Profile");

@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2026 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -17,7 +17,7 @@
  */
 
 
-# include "KVstoreObj.h"
+# include <KVstore.h>
 
 
 object endpoints;	/* connected WebSocket endpoints */
@@ -27,7 +27,7 @@ object endpoints;	/* connected WebSocket endpoints */
  */
 static void create()
 {
-    endpoints = new KVstoreObj(194);
+    endpoints = new KVstore(194);
 }
 
 /*

@@ -1,6 +1,6 @@
 /*
  * This file is part of https://github.com/LPC-language/signal-server
- * Copyright (C) 2024 Dworkin B.V.  All rights reserved.
+ * Copyright (C) 2024-2026 Dworkin B.V.  All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -57,23 +57,23 @@ int getDuration(string key)
 /*
  * set K/V
  */
-void set(string key, mixed value)
+int set(string key, mixed value)
 {
-    ::set(key, ({ time() + duration, value }));
+    return ::set(key, ({ time() + duration, value }));
 }
 
 /*
  * add K/V
  */
-void add(string key, mixed value)
+int add(string key, mixed value)
 {
-    ::add(key, ({ time() + duration, value }));
+    return ::add(key, ({ time() + duration, value }));
 }
 
 /*
  * change K/V
  */
-void change(string key, mixed value)
+int change(string key, mixed value)
 {
-    ::change(key, ({ time() + duration, value }));
+    return ::change(key, ({ time() + duration, value }));
 }
